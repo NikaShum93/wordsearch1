@@ -7,8 +7,8 @@
   <style>
     body {
       font-family: 'Comic Neue', sans-serif;
-      background: #000;
-      color: #fff;
+      background: transparent;
+      color: #000;
       margin: 0;
       padding: 0;
       display: flex;
@@ -75,6 +75,10 @@
     #wordsList li {
       margin-bottom: 8px;
     }
+    #wordsList li.found {
+      text-decoration: line-through;
+      color: #aaa;
+    }
     #messageBox {
       margin-top: 10px;
       font-size: 20px;
@@ -95,8 +99,6 @@
   <audio id="winSound" src="https://nikashum93.github.io/wordsearch/win.mp3" preload="auto"></audio>
 
   <script>
-    // ✅ ВСТРОЕННАЯ ЛОГИКА — полная рабочая
-
     const url = new URL(window.location.href);
     const words = (url.searchParams.get("words") || "МАМА,ПАПА,СЫР").toUpperCase().split(',');
     const level = url.searchParams.get("level") || "easy";
@@ -194,23 +196,28 @@
       const r = +cell.dataset.row;
       const c = +cell.dataset.col;
       if (cell.classList.contains("selected")) return;
+
+      // Удаляем прошлые .error
+      document.querySelectorAll(".cell.error").forEach(el => el.classList.remove("error"));
+
       cell.classList.add("selected");
       selected.push([r,c,cell]);
 
-      if (selected.length > 1) {
-        const word = selected.map(x => grid[x[0]][x[1]]).join('');
-        const found = words.includes(word);
-        if (found) {
-          selected.forEach(x => x[2].classList.add("correct"));
-          words.splice(words.indexOf(word),1);
-          updateList();
-          if (words.length === 0) showWin();
-        } else {
-          selected.forEach(x => x[2].classList.add("error"));
-        }
+      const word = selected.map(x => grid[x[0]][x[1]]).join('');
+      if (words.includes(word)) {
+        selected.forEach(x => x[2].classList.add("correct"));
+        selected.forEach(x => x[2].classList.remove("selected"));
+        const li = Array.from(listEl.children).find(li => li.textContent === word);
+        if (li) li.classList.add("found");
+        words.splice(words.indexOf(word), 1);
+        selected.length = 0;
+        playSound("clickSound");
+        if (words.length === 0) showWin();
+      } else if (selected.length >= 2 && !words.some(w => w.startsWith(word))) {
+        selected.forEach(x => x[2].classList.add("error"));
         selected.forEach(x => x[2].classList.remove("selected"));
         selected.length = 0;
-        playSound(found ? "clickSound" : "errorSound");
+        playSound("errorSound");
       }
     }
 
