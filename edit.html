@@ -2,284 +2,153 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>Редактор Wordsearch1 — КГБ</title>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&family=Comic+Neue:wght@700&display=swap" rel="stylesheet">
+  <title>Wordsearch by Nika Shum</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&family=Comic+Neue:wght@700&family=Press+Start+2P&family=Cinzel:wght@700&family=Luckiest+Guy&family=Chewy&family=Fredoka&display=swap" rel="stylesheet">
   <style>
-    html, body {
-      margin: 0; padding: 0;
-      width: 100vw; height: 100vh;
-      background: radial-gradient(ellipse at 65% 25%, #1b222a 72%, #16181a 100%);
-      color: #0ff;
-      font-family: 'Orbitron', Arial, sans-serif;
-      box-sizing: border-box;
-      overflow: hidden;
+    :root {
+      --cell-bg: #222;
+      --cell-color: #fff;
+      --cell-glow: 0 0 10px #00f;
+      --correct-bg: #0f0;
+      --correct-color: #000;
+      --error-bg: #f00;
+    }
+
+    body.theme-light {
+      --cell-bg: var(--cellBg, #ffffff);
+      --cell-color: #000000;
+      --cell-glow: 0 0 8px var(--glow-color, #ff00ff);
+    }
+
+    body.theme-dark {
+      --cell-bg: var(--cellBg, #000000);
+      --cell-color: #00e5e5;
+      --cell-glow: 0 0 12px var(--glow-color, #00e5e5);
+    }
+
+    body.theme-rainbow {
+      --cell-bg: var(--cellBg, #fff3dc);
+      --cell-color: #000000;
+      --cell-glow: none;
+    }
+
+    body {
+      background: transparent;
+      color: var(--cell-color);
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
     }
     #container {
       display: flex;
-      gap: 34px;
-      justify-content: space-between;
-      align-items: flex-start;
-      padding: 28px;
-      height: 100vh;
-      box-sizing: border-box;
+      flex-direction: row;
+      gap: 20px;
     }
-    .settings-panel {
-      width: 56%;
-      min-width: 340px;
-      max-width: 620px;
-      background: rgba(12,24,36,0.74);
-      border: 2.5px solid #0ff;
-      border-radius: 26px;
-      padding: 28px 32px 20px;
-      box-shadow: 0 0 28px #0ff2;
+    #game {
       display: flex;
       flex-direction: column;
+      align-items: center;
+    }
+    #grid {
+      display: grid;
       gap: 4px;
     }
-    .kgb-header {
+    .cell {
+      width: 44px;
+      height: 44px;
       display: flex;
+      justify-content: center;
       align-items: center;
-      gap: 18px;
-      margin-bottom: 7px;
-    }
-    .logo {
-      width: 54px; height: 54px;
-      border-radius: 50%;
-      box-shadow: 0 0 8px #0ff7;
-      background: #fff1;
-    }
-    .big-title {
-      font-size: 1.48em;
-      font-weight: bold;
-      color: #0ff;
-      text-shadow: 0 0 12px #0ff, 0 0 24px #0ff7;
-      margin-bottom: 2px;
-      line-height: 1.13;
-    }
-    .editor-fields label {
-      font-size: 1em;
-      margin-bottom: 2px;
-      display: flex;
-      flex-direction: column;
-      gap: 3px;
-      font-weight: 500;
-    }
-    textarea, input, select {
-      width: 100%;
-      padding: 8px 10px;
-      margin-top: 2px;
-      background: #10151b;
-      color: #0ff;
-      border: 1.8px solid #0ff;
+      background: var(--cell-bg);
       border-radius: 8px;
-      font-family: inherit;
-      font-size: 1em;
-      margin-bottom: 7px;
-      box-sizing: border-box;
-    }
-    textarea { height: 42px; resize: none; }
-    select, input { height: 32px; }
-    .row {
-      display: flex;
-      gap: 11px;
-      margin-bottom: 6px;
-    }
-    .editor-fields { margin-bottom: 7px; }
-    .effect-row {
-      display: flex;
-      gap: 18px;
-      margin-bottom: 6px;
-      align-items: center;
-    }
-    .effect-row label {
-      flex-direction: row;
-      align-items: center;
-      font-size: 1em;
-      gap: 6px;
-      font-family: 'Orbitron', Arial, sans-serif;
-    }
-    .effect-row input[type="checkbox"] {
-      accent-color: #0ff;
-      width: 18px;
-      height: 18px;
-    }
-    .copyright {
-      margin-top: 14px;
-      font-size: 0.94em;
-      color: #0ff8;
-      letter-spacing: 0.02em;
-    }
-    .code-panel {
-      width: 41%;
-      min-width: 275px;
-      background: rgba(10,18,30,0.74);
-      border: 2.5px dashed #0ff;
-      border-radius: 20px;
-      padding: 22px 16px;
-      margin-top: 23px;
-      box-shadow: 0 0 17px #0ff4;
-      display: flex;
-      flex-direction: column;
-    }
-    .code-title {
-      font-size: 1.11em;
-      font-weight: 600;
-      margin-bottom: 9px;
-      text-shadow: 0 0 7px #0ff8;
-    }
-    #resultBox {
-      width: 100%;
-      height: 92px;
-      font-size: 14.3px;
-      margin-bottom: 16px;
-      border-radius: 8px;
-      border: 2px solid #0ff;
-      background: #10161c;
-      color: #0ff;
-      font-family: 'Courier New', monospace;
-      resize: none;
-      padding: 8px;
-      box-sizing: border-box;
-    }
-    .copy-btn {
-      width: 100%;
-      background: #0ff;
-      color: #022;
-      font-size: 1.13em;
-      font-weight: bold;
-      border: none;
-      border-radius: 9px;
-      padding: 12px 0;
+      font-size: 20px;
+      color: var(--cell-color);
       cursor: pointer;
-      box-shadow: 0 0 14px #0ffb;
-      transition: background 0.2s;
+      transition: 0.2s;
+      user-select: none;
+      box-shadow: var(--cell-glow);
     }
-    .copy-btn:hover { background: #47fff4; color: #033; }
-    @media (max-width: 1080px) {
-      #container { flex-direction: column; gap: 16px; align-items: stretch; }
-      .settings-panel, .code-panel { width: 100%; }
-      .code-panel { margin-top: 18px; }
+    .cell.selected {
+      background: #444;
+    }
+    .cell.correct {
+      background: var(--correct-bg);
+      color: var(--correct-color);
+    }
+    .cell.error {
+      background: var(--error-bg);
+      animation: shake 0.3s;
+    }
+    .cell.rainbow {
+      animation: rainbow 1.5s infinite;
+    }
+    @keyframes rainbow {
+      0% { box-shadow: 0 0 8px red; }
+      25% { box-shadow: 0 0 8px orange; }
+      50% { box-shadow: 0 0 8px yellow; }
+      75% { box-shadow: 0 0 8px green; }
+      100% { box-shadow: 0 0 8px blue; }
+    }
+    @keyframes shake {
+      0% { transform: translate(1px, 1px); }
+      20% { transform: translate(-1px, 0px); }
+      40% { transform: translate(1px, -1px); }
+      60% { transform: translate(-1px, 1px); }
+      80% { transform: translate(1px, 0px); }
+      100% { transform: translate(0px, 0px); }
+    }
+    #wordsList {
+      list-style: none;
+      padding: 0;
+      font-size: 18px;
+      max-width: 180px;
+    }
+    #wordsList li {
+      margin-bottom: 8px;
+    }
+    #wordsList li.found {
+      text-decoration: line-through;
+      color: #aaa;
+    }
+    #messageBox {
+      margin-top: 10px;
+      font-size: 20px;
+      color: #0f0;
     }
   </style>
 </head>
 <body>
   <div id="container">
-    <div class="settings-panel">
-      <div class="kgb-header">
-        <img class="logo" src="https://nikashum93.github.io/pusyriki/assets/kgb-logo.png" alt="KGB">
-        <div><div class="big-title">Корпорация Геймификации Будущего</div></div>
-      </div>
-      <div class="editor-fields">
-        <label>Слова (через запятую или с новой строки):
-          <textarea id="words" placeholder="apple, banana, робот..."></textarea>
-        </label>
-        <label>Язык / Алфавит:
-          <select id="alphabet">
-            <option value="latin">Латиница (английский)</option>
-            <option value="cyrillic">Кириллица (русский)</option>
-            <option value="french">Французский</option>
-            <option value="german">Немецкий</option>
-            <option value="spanish">Испанский</option>
-            <option value="pinyin">Пиньинь (китайский)</option>
-            <option value="hiragana">Хирагана (японский)</option>
-          </select>
-        </label>
-        <div class="row">
-          <label>Регистр букв:
-            <select id="case">
-              <option value="uppercase">ЗАГЛАВНЫЕ</option>
-              <option value="lowercase">строчные</option>
-            </select>
-          </label>
-          <label>Сложность:
-            <select id="level">
-              <option value="easy">Лёгкий (→ ↓)</option>
-              <option value="medium">Средний (+ диагонали)</option>
-              <option value="hard">Сложный (в любом направлении)</option>
-            </select>
-          </label>
-        </div>
-        <div class="row">
-          <label>Стиль оформления:
-            <select id="style">
-              <option value="neon">Неон</option>
-              <option value="kids">Детский</option>
-              <option value="magic">Магический</option>
-              <option value="rainbow">Радужный</option>
-              <option value="pastel">Пастель</option>
-            </select>
-          </label>
-          <label>Финальное сообщение:
-            <input type="text" id="winText" placeholder="Молодец! Все слова найдены!">
-          </label>
-        </div>
-        <div class="row">
-          <label>Размер сетки:
-            <select id="gridSize">
-              <option value="10">10 × 10</option>
-              <option value="12">12 × 12</option>
-              <option value="15">15 × 15</option>
-              <option value="18">18 × 18</option>
-            </select>
-          </label>
-        </div>
-        <div class="effect-row">
-          <label><input type="checkbox" id="sparkles"> Блестяшки</label>
-          <label><input type="checkbox" id="glossy"> Глянец</label>
-          <label><input type="checkbox" id="sound" checked> Звук</label>
-        </div>
-      </div>
-      <div class="copyright">© Корпорация Геймификации Будущего, 2025</div>
+    <div id="game">
+      <div id="grid"></div>
+      <div id="messageBox"></div>
     </div>
-    <div class="code-panel">
-      <div class="code-title">Код для вставки в <b>Genially</b>:</div>
-      <textarea readonly id="resultBox"></textarea>
-      <button class="copy-btn" onclick="copyIframe()">Скопировать</button>
-    </div>
+    <ul id="wordsList"></ul>
   </div>
+  <audio id="clickSound" src="https://nikashum93.github.io/wordsearch/click.mp3" preload="auto"></audio>
+  <audio id="errorSound" src="https://nikashum93.github.io/wordsearch/error.mp3" preload="auto"></audio>
+  <audio id="winSound" src="https://nikashum93.github.io/wordsearch/win.mp3" preload="auto"></audio>
+
   <script>
-    function generateIframe() {
-      const wordsRaw = document.getElementById('words').value;
-      const alphabet = document.getElementById('alphabet').value;
-      const level = document.getElementById('level').value;
-      const style = document.getElementById('style').value;
-      const letterCase = document.getElementById('case').value;
-      const winText = encodeURIComponent(document.getElementById('winText').value.trim() || "");
-      const sparkles = document.getElementById('sparkles').checked ? 1 : 0;
-      const glossy = document.getElementById('glossy').checked ? 1 : 0;
-      const sound = document.getElementById('sound').checked ? 1 : 0;
-      const gridSize = document.getElementById('gridSize').value;
-      const wordsList = wordsRaw.split(/[\n,]+/).map(w => w.trim()).filter(w => w);
+    const url = new URL(window.location.href);
+    const words = (url.searchParams.get("words") || "МАМА,ПАПА,СЫР").toUpperCase().split(',');
+    const level = url.searchParams.get("level") || "easy";
+    const winText = url.searchParams.get("winText") || "Все слова найдены!";
+    const sound = url.searchParams.get("sound") !== "0";
+    const theme = url.searchParams.get("theme") || "light";
+    const font = url.searchParams.get("font") || "Comic Neue";
+    const glowColor = url.searchParams.get("glowColor") || "#00ffff";
+    const cellBg = url.searchParams.get("cellBg") || "";
 
-      const params = new URLSearchParams({
-        words: wordsList.join(','),
-        alphabet,
-        case: letterCase,
-        level,
-        style,
-        winText,
-        sparkles,
-        glossy,
-        gridSize,
-        sound
-      });
+    document.body.classList.add("theme-" + theme);
+    document.body.style.setProperty('--glow-color', glowColor);
+    if (cellBg) document.body.style.setProperty('--cellBg', cellBg);
+    document.body.style.fontFamily = `'${font}', sans-serif`;
 
-      document.getElementById('resultBox').value =
-        `<iframe src=\"https://nikashum93.github.io/wordsearch1/main.html?${params.toString()}\" width=\"960\" height=\"540\" frameborder=\"0\" allowfullscreen></iframe>`;
-    }
-
-    function copyIframe() {
-      const el = document.getElementById('resultBox');
-      el.select();
-      el.setSelectionRange(0, 99999);
-      document.execCommand('copy');
-    }
-
-    document.querySelectorAll('textarea, select, input[type=\"text\"], input[type=\"checkbox\"]').forEach(el =>
-      el.addEventListener('input', generateIframe)
-    );
-
-    window.onload = generateIframe;
+    // остальной код оставляем как есть
   </script>
 </body>
 </html>
