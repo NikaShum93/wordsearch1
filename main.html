@@ -3,230 +3,201 @@
 <head>
   <meta charset="UTF-8" />
   <title>Wordsearch by Nika Shum</title>
+  <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@700&display=swap" rel="stylesheet">
   <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
-      width: 100%;
-      height: 100%;
-      background: #111;
-      font-family: sans-serif;
+    :root {
+      --cell-bg: #ffffff;
+      --cell-color: #000000;
+      --cell-glow: 0 0 10px #00ffff;
     }
+
+    body {
+      margin: 0;
+      background: transparent;
+      font-family: 'Comic Neue', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
     #container {
       display: flex;
-      flex-direction: row;
-      width: 100%;
-      height: 100%;
+      gap: 40px;
     }
+
     #grid {
       display: grid;
-      place-content: center;
-      margin: auto;
-      gap: 2px;
+      gap: 5px;
     }
+
     .cell {
-      width: 36px;
-      height: 36px;
+      width: 42px;
+      height: 42px;
       display: flex;
-      align-items: center;
       justify-content: center;
-      border-radius: 6px;
+      align-items: center;
+      font-size: 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      background: var(--cell-bg);
+      color: var(--cell-color);
+      box-shadow: var(--cell-glow);
       user-select: none;
-      font-weight: bold;
-      font-size: 18px;
-      box-shadow: 0 0 4px rgba(0,0,0,0.5);
-      transition: transform 0.1s ease;
+      transition: 0.2s;
     }
-    .cell.selected {
-      background: gold !important;
-      transform: scale(1.1);
+
+    .rainbow {
+      animation: rainbowGlow 2s infinite;
     }
+
+    @keyframes rainbowGlow {
+      0% { box-shadow: 0 0 6px red; }
+      25% { box-shadow: 0 0 6px orange; }
+      50% { box-shadow: 0 0 6px green; }
+      75% { box-shadow: 0 0 6px blue; }
+      100% { box-shadow: 0 0 6px violet; }
+    }
+
     .cell.correct {
-      background: limegreen !important;
+      background: #90ee90;
+      color: #000;
     }
-    #wordList {
-      color: white;
-      font-size: 16px;
-      padding: 10px;
+
+    #wordsList {
+      list-style: none;
+      padding: 0;
+      margin: 0;
     }
-    #wordList li {
-      margin-bottom: 4px;
+
+    #wordsList li {
+      margin-bottom: 10px;
+      padding: 5px 10px;
+      border-radius: 8px;
+      background: var(--cell-bg);
+      color: var(--cell-color);
+      box-shadow: var(--cell-glow);
+      font-weight: bold;
     }
-    #finalText {
-      display: none;
-      position: absolute;
-      top: 40%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      color: #00ffff;
-      font-size: 32px;
-      font-family: 'Comic Neue', sans-serif;
+
+    #wordsList li.found {
+      text-decoration: line-through;
+      opacity: 0.5;
+    }
+
+    #messageBox {
+      margin-top: 20px;
+      font-size: 20px;
       text-align: center;
-      animation: fadein 1s ease forwards;
-    }
-    @keyframes fadein {
-      from { opacity: 0; transform: translate(-50%, -60%); }
-      to { opacity: 1; transform: translate(-50%, -50%); }
-    }
-    canvas.sparkle {
-      position: absolute;
-      pointer-events: none;
-      z-index: 999;
     }
   </style>
 </head>
 <body>
   <div id="container">
-    <div id="grid"></div>
-    <ul id="wordList"></ul>
+    <div>
+      <div id="grid"></div>
+      <div id="messageBox"></div>
+    </div>
+    <ul id="wordsList"></ul>
   </div>
-  <div id="finalText"></div>
-  <canvas id="sparkleCanvas" class="sparkle"></canvas>
-
-  <audio id="popSound" src="https://nikashum93.github.io/pusyriki/sound.mp3"></audio>
 
   <script>
     const params = new URLSearchParams(window.location.search);
-    const words = decodeURIComponent(params.get('words') || '').split(',').map(w => w.trim().toUpperCase());
-    const winText = decodeURIComponent(params.get('winText') || 'Молодец!');
-    const rows = +params.get('rows') || 10;
-    const cols = +params.get('cols') || 10;
+    const words = (params.get('words') || 'МАМА,ПАПА,СЫР').toUpperCase().split(',');
+    const rows = parseInt(params.get('rows') || 10);
+    const cols = parseInt(params.get('cols') || 10);
+    const winText = params.get('winText') || 'Все слова найдены!';
+    const theme = params.get('theme') || 'light';
+    const font = params.get('font') || 'Comic Neue';
     const glowColor = params.get('glowColor') || '#00ffff';
     const cellBg = params.get('cellBg') || '#ffffff';
     const textColor = params.get('textColor') || '#000000';
-    const theme = params.get('theme') || 'light';
-    const font = decodeURIComponent(params.get('font') || 'sans-serif');
-    const glossy = params.get('glossy') === '1';
-    const sound = params.get('sound') === '1';
 
-    const grid = document.getElementById('grid');
-    const wordList = document.getElementById('wordList');
-    const finalText = document.getElementById('finalText');
-    const sparkleCanvas = document.getElementById('sparkleCanvas');
-    const ctx = sparkleCanvas.getContext('2d');
-
-    document.body.style.fontFamily = font;
-    sparkleCanvas.width = window.innerWidth;
-    sparkleCanvas.height = window.innerHeight;
-
-    // Theme styles
-    if (theme === 'dark') {
-      document.body.style.background = '#0b0b0f';
-    } else if (theme === 'rainbow') {
-      document.body.style.background = 'linear-gradient(135deg, red, orange, yellow, green, blue, indigo, violet)';
-      document.body.style.backgroundSize = '400% 400%';
-      document.body.style.animation = 'rainbowMove 15s ease infinite';
-    }
-
-    const style = document.createElement('style');
-    style.innerHTML = `
-      .cell {
-        background: ${cellBg};
-        color: ${textColor};
-        box-shadow: 0 0 6px ${glowColor};
-      }
-      @keyframes rainbowMove {
-        0% { background-position: 0% 50%; }
-        50% { background-position: 100% 50%; }
-        100% { background-position: 0% 50%; }
-      }
-    `;
-    document.head.appendChild(style);
+    document.body.style.setProperty('--cell-glow', `0 0 10px ${glowColor}`);
+    document.body.style.setProperty('--cell-bg', cellBg);
+    document.body.style.setProperty('--cell-color', textColor);
+    document.body.style.fontFamily = `'${font}', sans-serif`;
 
     const alphabet = 'АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ';
-    const gridData = Array.from({ length: rows }, () => Array(cols).fill(''));
 
-    // Fill grid with random letters
-    for (let y = 0; y < rows; y++) {
-      for (let x = 0; x < cols; x++) {
-        gridData[y][x] = alphabet[Math.floor(Math.random() * alphabet.length)];
-      }
-    }
+    const gridEl = document.getElementById('grid');
+    const wordsEl = document.getElementById('wordsList');
+    const messageBox = document.getElementById('messageBox');
 
-    // Display grid
-    grid.style.gridTemplateColumns = `repeat(${cols}, 36px)`;
-    grid.style.gridTemplateRows = `repeat(${rows}, 36px)`;
-    for (let y = 0; y < rows; y++) {
-      for (let x = 0; x < cols; x++) {
-        const div = document.createElement('div');
-        div.className = 'cell';
-        div.dataset.row = y;
-        div.dataset.col = x;
-        div.textContent = gridData[y][x];
-        grid.appendChild(div);
-      }
-    }
+    gridEl.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
 
-    // Add word list
-    words.forEach(word => {
-      const li = document.createElement('li');
-      li.textContent = word;
-      wordList.appendChild(li);
-    });
+    const grid = Array(rows).fill(null).map(() => Array(cols).fill(''));
+    const placedWords = [];
 
-    // Sparkle effect
-    function sparkle(x, y) {
-      if (!glossy) return;
-      const particles = [];
-      for (let i = 0; i < 20; i++) {
-        particles.push({
-          x, y,
-          dx: (Math.random() - 0.5) * 4,
-          dy: (Math.random() - 0.5) * 4,
-          size: Math.random() * 2 + 1,
-          alpha: 1
-        });
-      }
-      const interval = setInterval(() => {
-        ctx.clearRect(0, 0, sparkleCanvas.width, sparkleCanvas.height);
-        particles.forEach(p => {
-          p.x += p.dx;
-          p.y += p.dy;
-          p.alpha -= 0.02;
-          ctx.fillStyle = `rgba(255,255,255,${p.alpha})`;
-          ctx.beginPath();
-          ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-          ctx.fill();
-        });
-        if (particles.every(p => p.alpha <= 0)) clearInterval(interval);
-      }, 16);
-    }
+    function placeWords() {
+      for (const word of words) {
+        let placed = false;
+        for (let attempt = 0; attempt < 100 && !placed; attempt++) {
+          const dir = Math.random() < 0.5 ? [1, 0] : [0, 1];
+          const row = Math.floor(Math.random() * (rows - (dir[0] ? word.length : 0)));
+          const col = Math.floor(Math.random() * (cols - (dir[1] ? word.length : 0)));
 
-    const selected = [];
-    grid.addEventListener('click', e => {
-      const cell = e.target.closest('.cell');
-      if (!cell || cell.classList.contains('correct')) return;
-      const { row, col } = cell.dataset;
-      if (selected.length > 0) {
-        const last = selected[selected.length - 1];
-        const dRow = Math.abs(row - last.dataset.row);
-        const dCol = Math.abs(col - last.dataset.col);
-        if (!(dRow <= 1 && dCol <= 1)) return;
-      }
-      cell.classList.add('selected');
-      selected.push(cell);
-      if (sound) document.getElementById('popSound').play();
-      if (glossy) sparkle(e.pageX, e.pageY);
-      if (selected.length > 1) checkWord();
-    });
+          let fits = true;
+          for (let i = 0; i < word.length; i++) {
+            const r = row + i * dir[0];
+            const c = col + i * dir[1];
+            if (grid[r][c] && grid[r][c] !== word[i]) {
+              fits = false;
+              break;
+            }
+          }
 
-    function checkWord() {
-      const str = selected.map(c => c.textContent).join('');
-      if (words.includes(str)) {
-        selected.forEach(c => c.classList.add('correct'));
-        wordList.querySelectorAll('li').forEach(li => {
-          if (li.textContent === str) li.style.textDecoration = 'line-through';
-        });
-        const allCorrect = [...grid.querySelectorAll('.correct')].length >= words.join('').length;
-        if (allCorrect) {
-          finalText.textContent = winText;
-          finalText.style.display = 'block';
+          if (fits) {
+            for (let i = 0; i < word.length; i++) {
+              const r = row + i * dir[0];
+              const c = col + i * dir[1];
+              grid[r][c] = word[i];
+            }
+            placedWords.push(word);
+            placed = true;
+          }
         }
       }
-      selected.forEach(c => c.classList.remove('selected'));
-      selected.length = 0;
     }
+
+    function fillEmpty() {
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          if (!grid[r][c]) {
+            grid[r][c] = alphabet[Math.floor(Math.random() * alphabet.length)];
+          }
+        }
+      }
+    }
+
+    function renderGrid() {
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const cell = document.createElement('div');
+          cell.classList.add('cell');
+          if (theme === 'rainbow') cell.classList.add('rainbow');
+          cell.textContent = grid[r][c];
+          gridEl.appendChild(cell);
+        }
+      }
+    }
+
+    function renderWords() {
+      for (const word of words) {
+        const li = document.createElement('li');
+        li.textContent = word;
+        wordsEl.appendChild(li);
+      }
+    }
+
+    function showWin() {
+      messageBox.textContent = winText;
+    }
+
+    placeWords();
+    fillEmpty();
+    renderGrid();
+    renderWords();
   </script>
 </body>
 </html>
