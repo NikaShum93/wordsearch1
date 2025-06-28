@@ -43,20 +43,24 @@
       height: 100vh;
       font-family: sans-serif;
     }
+
     #container {
       display: flex;
       flex-direction: row;
       gap: 20px;
     }
+
     #game {
       display: flex;
       flex-direction: column;
       align-items: center;
     }
+
     #grid {
       display: grid;
       gap: 4px;
     }
+
     .cell {
       width: 44px;
       height: 44px;
@@ -73,20 +77,25 @@
       box-shadow: var(--cell-glow);
       position: relative;
     }
+
     .cell.selected {
       background: rgba(200, 200, 200, 0.2);
     }
+
     .cell.correct {
       background: var(--correct-bg);
       color: var(--correct-color);
     }
+
     .cell.error {
       background: var(--error-bg);
       animation: shake 0.3s;
     }
+
     .cell.rainbow {
       animation: rainbow 1.5s infinite;
     }
+
     @keyframes rainbow {
       0% { box-shadow: 0 0 8px red; }
       25% { box-shadow: 0 0 8px orange; }
@@ -94,6 +103,12 @@
       75% { box-shadow: 0 0 8px green; }
       100% { box-shadow: 0 0 8px blue; }
     }
+
+    @keyframes sparkle {
+      0% { opacity: 1; transform: scale(1); }
+      100% { opacity: 0; transform: scale(3); }
+    }
+
     @keyframes shake {
       0% { transform: translate(1px, 1px); }
       20% { transform: translate(-1px, 0px); }
@@ -102,19 +117,25 @@
       80% { transform: translate(1px, 0px); }
       100% { transform: translate(0px, 0px); }
     }
+
     #wordsList {
       list-style: none;
       padding: 0;
       font-size: 18px;
       max-width: 180px;
     }
+
     #wordsList li {
       margin-bottom: 8px;
+      color: var(--cell-color);
+      font-weight: bold;
     }
+
     #wordsList li.found {
       text-decoration: line-through;
       color: #aaa;
     }
+
     #messageBox {
       margin-top: 10px;
       font-size: 20px;
@@ -130,9 +151,11 @@
     </div>
     <ul id="wordsList"></ul>
   </div>
+
   <audio id="clickSound" src="https://nikashum93.github.io/wordsearch/click.mp3" preload="auto"></audio>
   <audio id="errorSound" src="https://nikashum93.github.io/wordsearch/error.mp3" preload="auto"></audio>
   <audio id="winSound" src="https://nikashum93.github.io/wordsearch/win.mp3" preload="auto"></audio>
+
   <script>
     const url = new URL(window.location.href);
     const words = (url.searchParams.get("words") || "МАМА,ПАПА,СЫР").toUpperCase().split(',');
@@ -151,22 +174,25 @@
     if (textColor) document.body.style.setProperty('--textColor', textColor);
     document.body.style.fontFamily = `'${font}', sans-serif`;
 
-    const sparkle = (x, y) => {
-      const dot = document.createElement("div");
-      dot.style.position = "absolute";
-      dot.style.left = x + "px";
-      dot.style.top = y + "px";
-      dot.style.width = "4px";
-      dot.style.height = "4px";
-      dot.style.borderRadius = "50%";
-      dot.style.background = glowColor;
-      dot.style.opacity = 1;
-      dot.style.pointerEvents = "none";
-      dot.style.zIndex = 9999;
-      dot.style.animation = "sparkle 0.6s ease-out forwards";
-      document.body.appendChild(dot);
-      setTimeout(() => dot.remove(), 600);
-    };
+    function sparkle(x, y) {
+      for (let i = 0; i < 10; i++) {
+        const dot = document.createElement("div");
+        const size = Math.random() * 3 + 2;
+        dot.style.position = "absolute";
+        dot.style.left = `${x + (Math.random() * 20 - 10)}px`;
+        dot.style.top = `${y + (Math.random() * 20 - 10)}px`;
+        dot.style.width = `${size}px`;
+        dot.style.height = `${size}px`;
+        dot.style.borderRadius = "50%";
+        dot.style.background = glowColor;
+        dot.style.opacity = 1;
+        dot.style.pointerEvents = "none";
+        dot.style.zIndex = 9999;
+        dot.style.animation = "sparkle 0.6s ease-out forwards";
+        document.body.appendChild(dot);
+        setTimeout(() => dot.remove(), 600);
+      }
+    }
 
     window.addEventListener('DOMContentLoaded', () => {
       initGame({ words, level, winText, sound });
