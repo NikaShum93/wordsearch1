@@ -5,10 +5,43 @@
   <title>Wordsearch by Nika Shum</title>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&family=Comic+Neue:wght@700&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --cell-bg: #222;
+      --cell-color: #fff;
+      --cell-glow: 0 0 10px #00f;
+      --correct-bg: #0f0;
+      --correct-color: #000;
+      --error-bg: #f00;
+    }
+
+    body.theme-neon {
+      --cell-bg: #222;
+      --cell-color: #fff;
+      --cell-glow: 0 0 10px #00f;
+    }
+
+    body.theme-classic {
+      --cell-bg: #fff;
+      --cell-color: #000;
+      --cell-glow: none;
+    }
+
+    body.theme-kid {
+      --cell-bg: #fffae3;
+      --cell-color: #000;
+      --cell-glow: 0 0 8px #f0f;
+    }
+
+    body.theme-lux {
+      --cell-bg: #111;
+      --cell-color: #ffd700;
+      --cell-glow: 0 0 12px gold;
+    }
+
     body {
       font-family: 'Comic Neue', sans-serif;
       background: transparent;
-      color: #000;
+      color: var(--cell-color);
       margin: 0;
       padding: 0;
       display: flex;
@@ -36,25 +69,25 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      background: #222;
+      background: var(--cell-bg);
       border-radius: 8px;
       font-size: 20px;
+      color: var(--cell-color);
       cursor: pointer;
       transition: 0.2s;
       user-select: none;
+      box-shadow: var(--cell-glow);
     }
     .cell.selected {
       background: #444;
     }
     .cell.correct {
-      background: #0f0;
-      color: #000;
+      background: var(--correct-bg);
+      color: var(--correct-color);
     }
     .cell.error {
-      background: #f00;
-    }
-    .cell.glossy {
-      box-shadow: 0 0 10px #00f;
+      background: var(--error-bg);
+      animation: shake 0.3s;
     }
     .cell.rainbow {
       animation: rainbow 1.5s infinite;
@@ -65,6 +98,14 @@
       50% { box-shadow: 0 0 8px yellow; }
       75% { box-shadow: 0 0 8px green; }
       100% { box-shadow: 0 0 8px blue; }
+    }
+    @keyframes shake {
+      0% { transform: translate(1px, 1px); }
+      20% { transform: translate(-1px, 0px); }
+      40% { transform: translate(1px, -1px); }
+      60% { transform: translate(-1px, 1px); }
+      80% { transform: translate(1px, 0px); }
+      100% { transform: translate(0px, 0px); }
     }
     #wordsList {
       list-style: none;
@@ -106,6 +147,8 @@
     const sound = url.searchParams.get("sound") !== "0";
     const glossy = url.searchParams.get("glossy") === "1";
     const sparkles = url.searchParams.get("sparkles") === "1";
+    const theme = url.searchParams.get("theme") || "neon";
+    document.body.classList.add("theme-" + theme);
 
     const gridSize = 10;
     const directions = {
@@ -180,7 +223,6 @@
         for (let c = 0; c < gridSize; c++) {
           const cell = document.createElement('div');
           cell.className = 'cell';
-          if (glossy) cell.classList.add("glossy");
           if (sparkles) cell.classList.add("rainbow");
           cell.textContent = grid[r][c];
           cell.dataset.row = r;
@@ -197,7 +239,6 @@
       const c = +cell.dataset.col;
       if (cell.classList.contains("selected")) return;
 
-      // Удаляем прошлые .error
       document.querySelectorAll(".cell.error").forEach(el => el.classList.remove("error"));
 
       cell.classList.add("selected");
