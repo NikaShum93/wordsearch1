@@ -1,203 +1,258 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>Wordsearch by Nika Shum</title>
-  <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&family=Comic+Neue:wght@700&family=Press+Start+2P&family=Cinzel:wght@700&family=Luckiest+Guy&family=Chewy&family=Fredoka&family=Noto+Sans+JP&family=Noto+Sans+SC&display=swap" rel="stylesheet">
   <style>
     :root {
       --cell-bg: #ffffff;
-      --cell-color: #000000;
-      --cell-glow: 0 0 10px #00ffff;
+      --text-color: #000000;
+      --glow-color: #00ffff;
     }
 
     body {
-      margin: 0;
       background: transparent;
-      font-family: 'Comic Neue', sans-serif;
+      font-family: sans-serif;
+      margin: 0;
+      padding: 0;
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
     }
 
-    #container {
+    .container {
       display: flex;
-      gap: 40px;
+      gap: 30px;
     }
 
     #grid {
       display: grid;
-      gap: 5px;
+      gap: 4px;
     }
 
     .cell {
-      width: 42px;
-      height: 42px;
+      width: 40px;
+      height: 40px;
+      background: var(--cell-bg);
+      color: var(--text-color);
       display: flex;
-      justify-content: center;
       align-items: center;
+      justify-content: center;
       font-size: 20px;
       border-radius: 8px;
+      box-shadow: 0 0 10px var(--glow-color);
       cursor: pointer;
-      background: var(--cell-bg);
-      color: var(--cell-color);
-      box-shadow: var(--cell-glow);
       user-select: none;
       transition: 0.2s;
     }
 
-    .rainbow {
-      animation: rainbowGlow 2s infinite;
-    }
-
-    @keyframes rainbowGlow {
-      0% { box-shadow: 0 0 6px red; }
-      25% { box-shadow: 0 0 6px orange; }
-      50% { box-shadow: 0 0 6px green; }
-      75% { box-shadow: 0 0 6px blue; }
-      100% { box-shadow: 0 0 6px violet; }
+    .cell.selected {
+      background: rgba(0, 255, 255, 0.4);
     }
 
     .cell.correct {
-      background: #90ee90;
-      color: #000;
+      background: lime;
+      color: black;
     }
 
-    #wordsList {
+    .cell.error {
+      background: red;
+      color: white;
+    }
+
+    .rainbow {
+      animation: rainbow-glow 2s infinite;
+    }
+
+    @keyframes rainbow-glow {
+      0%   { box-shadow: 0 0 8px red; }
+      25%  { box-shadow: 0 0 8px orange; }
+      50%  { box-shadow: 0 0 8px yellow; }
+      75%  { box-shadow: 0 0 8px green; }
+      100% { box-shadow: 0 0 8px blue; }
+    }
+
+    ul#wordsList {
       list-style: none;
       padding: 0;
-      margin: 0;
+      font-size: 18px;
+      max-width: 200px;
     }
 
-    #wordsList li {
-      margin-bottom: 10px;
-      padding: 5px 10px;
-      border-radius: 8px;
+    ul#wordsList li {
+      padding: 6px 10px;
+      margin-bottom: 8px;
       background: var(--cell-bg);
-      color: var(--cell-color);
-      box-shadow: var(--cell-glow);
-      font-weight: bold;
+      color: var(--text-color);
+      border-radius: 8px;
+      box-shadow: 0 0 8px var(--glow-color);
     }
 
-    #wordsList li.found {
+    ul#wordsList li.found {
       text-decoration: line-through;
       opacity: 0.5;
     }
 
     #messageBox {
-      margin-top: 20px;
-      font-size: 20px;
-      text-align: center;
+      margin-top: 10px;
+      font-size: 22px;
+      color: #0f0;
+    }
+
+    .sparkle {
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      background: white;
+      border-radius: 50%;
+      pointer-events: none;
+      animation: sparkle 0.6s linear forwards;
+    }
+
+    @keyframes sparkle {
+      0% { opacity: 1; transform: scale(1); }
+      100% { opacity: 0; transform: scale(2) translateY(-10px); }
     }
   </style>
 </head>
 <body>
-  <div id="container">
-    <div>
-      <div id="grid"></div>
-      <div id="messageBox"></div>
-    </div>
+  <div class="container">
+    <div id="grid"></div>
     <ul id="wordsList"></ul>
   </div>
+  <div id="messageBox"></div>
 
   <script>
-    const params = new URLSearchParams(window.location.search);
-    const words = (params.get('words') || 'МАМА,ПАПА,СЫР').toUpperCase().split(',');
-    const rows = parseInt(params.get('rows') || 10);
-    const cols = parseInt(params.get('cols') || 10);
-    const winText = params.get('winText') || 'Все слова найдены!';
-    const theme = params.get('theme') || 'light';
-    const font = params.get('font') || 'Comic Neue';
-    const glowColor = params.get('glowColor') || '#00ffff';
-    const cellBg = params.get('cellBg') || '#ffffff';
-    const textColor = params.get('textColor') || '#000000';
+    const url = new URL(location.href);
+    const words = (url.searchParams.get("words") || "МАМА,ПАПА,СЫР").toUpperCase().split(',');
+    const winText = decodeURIComponent(url.searchParams.get("winText") || "Все слова найдены!");
+    const rows = parseInt(url.searchParams.get("rows") || "10");
+    const cols = parseInt(url.searchParams.get("cols") || "10");
+    const theme = url.searchParams.get("theme") || "light";
+    const font = decodeURIComponent(url.searchParams.get("font") || "Comic Neue");
+    const glowColor = url.searchParams.get("glowColor") || "#00ffff";
+    const cellBg = url.searchParams.get("cellBg") || "#ffffff";
+    const textColor = url.searchParams.get("textColor") || "#000000";
+    const glossy = url.searchParams.get("glossy") === "1";
+    const soundEnabled = url.searchParams.get("sound") === "1";
+    const lang = url.searchParams.get("lang") || "ru";
 
-    document.body.style.setProperty('--cell-glow', `0 0 10px ${glowColor}`);
     document.body.style.setProperty('--cell-bg', cellBg);
-    document.body.style.setProperty('--cell-color', textColor);
+    document.body.style.setProperty('--text-color', textColor);
+    document.body.style.setProperty('--glow-color', glowColor);
     document.body.style.fontFamily = `'${font}', sans-serif`;
 
-    const alphabet = 'АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ';
-
-    const gridEl = document.getElementById('grid');
-    const wordsEl = document.getElementById('wordsList');
+    const gridElement = document.getElementById('grid');
+    const wordsList = document.getElementById('wordsList');
     const messageBox = document.getElementById('messageBox');
+    let selected = [];
+    let foundWords = [];
 
-    gridEl.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+    const letters = {
+      ru: 'АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ',
+      en: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+      fr: 'ABCDEFGHIJKLMNOPQRSTUVWXYZÀÂÇÉÈÊËÎÏÔÙÛÜŸ',
+      de: 'ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÜß',
+      es: 'ABCDEFGHIJKLMNÑOPQRSTUVWXYZ',
+      it: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+    }[lang] || 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
-    const grid = Array(rows).fill(null).map(() => Array(cols).fill(''));
-    const placedWords = [];
+    function createEmptyGrid(rows, cols) {
+      return Array.from({ length: rows }, () =>
+        Array.from({ length: cols }, () => letters[Math.floor(Math.random() * letters.length)])
+      );
+    }
 
-    function placeWords() {
+    function placeWords(grid, words) {
       for (const word of words) {
         let placed = false;
-        for (let attempt = 0; attempt < 100 && !placed; attempt++) {
-          const dir = Math.random() < 0.5 ? [1, 0] : [0, 1];
-          const row = Math.floor(Math.random() * (rows - (dir[0] ? word.length : 0)));
-          const col = Math.floor(Math.random() * (cols - (dir[1] ? word.length : 0)));
-
-          let fits = true;
-          for (let i = 0; i < word.length; i++) {
-            const r = row + i * dir[0];
-            const c = col + i * dir[1];
-            if (grid[r][c] && grid[r][c] !== word[i]) {
-              fits = false;
-              break;
-            }
-          }
-
-          if (fits) {
-            for (let i = 0; i < word.length; i++) {
-              const r = row + i * dir[0];
-              const c = col + i * dir[1];
-              grid[r][c] = word[i];
-            }
-            placedWords.push(word);
+        for (let attempts = 0; attempts < 100 && !placed; attempts++) {
+          const dir = Math.floor(Math.random() * 2); // 0 - horizontal, 1 - vertical
+          const row = Math.floor(Math.random() * rows);
+          const col = Math.floor(Math.random() * cols);
+          if (dir === 0 && col + word.length <= cols) {
+            for (let i = 0; i < word.length; i++) grid[row][col + i] = word[i];
+            placed = true;
+          } else if (dir === 1 && row + word.length <= rows) {
+            for (let i = 0; i < word.length; i++) grid[row + i][col] = word[i];
             placed = true;
           }
         }
       }
     }
 
-    function fillEmpty() {
-      for (let r = 0; r < rows; r++) {
-        for (let c = 0; c < cols; c++) {
-          if (!grid[r][c]) {
-            grid[r][c] = alphabet[Math.floor(Math.random() * alphabet.length)];
-          }
+    const grid = createEmptyGrid(rows, cols);
+    placeWords(grid, words);
+    gridElement.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const cell = document.createElement('div');
+        cell.className = 'cell';
+        if (theme === 'rainbow') cell.classList.add('rainbow');
+        cell.textContent = grid[r][c];
+        cell.dataset.row = r;
+        cell.dataset.col = c;
+        gridElement.appendChild(cell);
+      }
+    }
+
+    function sparkle(x, y) {
+      for (let i = 0; i < 15; i++) {
+        const s = document.createElement('div');
+        s.className = 'sparkle';
+        s.style.left = x + (Math.random() - 0.5) * 30 + 'px';
+        s.style.top = y + (Math.random() - 0.5) * 30 + 'px';
+        document.body.appendChild(s);
+        setTimeout(() => s.remove(), 600);
+      }
+    }
+
+    gridElement.addEventListener('click', e => {
+      const cell = e.target.closest('.cell');
+      if (!cell || cell.classList.contains('correct')) return;
+
+      if (selected.length > 0) {
+        const last = selected[selected.length - 1];
+        const dRow = Math.abs(cell.dataset.row - last.dataset.row);
+        const dCol = Math.abs(cell.dataset.col - last.dataset.col);
+        if (!(dRow <= 1 && dCol <= 1)) return;
+      }
+
+      cell.classList.add('selected');
+      selected.push(cell);
+
+      if (soundEnabled && glossy) sparkle(e.pageX, e.pageY);
+      if (selected.length > 1) checkWord();
+    });
+
+    function checkWord() {
+      const word = selected.map(c => c.textContent).join('');
+      const reversed = word.split('').reverse().join('');
+      const match = words.find(w => w === word || w === reversed);
+      if (match && !foundWords.includes(match)) {
+        selected.forEach(c => c.classList.add('correct'));
+        const li = [...wordsList.children].find(li => li.textContent === match);
+        if (li) li.classList.add('found');
+        foundWords.push(match);
+        if (foundWords.length === words.length) {
+          messageBox.textContent = decodeURIComponent(winText);
         }
+      } else {
+        selected.forEach(c => c.classList.add('error'));
+        setTimeout(() => selected.forEach(c => c.classList.remove('error')), 500);
       }
+      selected.forEach(c => c.classList.remove('selected'));
+      selected = [];
     }
 
-    function renderGrid() {
-      for (let r = 0; r < rows; r++) {
-        for (let c = 0; c < cols; c++) {
-          const cell = document.createElement('div');
-          cell.classList.add('cell');
-          if (theme === 'rainbow') cell.classList.add('rainbow');
-          cell.textContent = grid[r][c];
-          gridEl.appendChild(cell);
-        }
-      }
-    }
-
-    function renderWords() {
-      for (const word of words) {
-        const li = document.createElement('li');
-        li.textContent = word;
-        wordsEl.appendChild(li);
-      }
-    }
-
-    function showWin() {
-      messageBox.textContent = winText;
-    }
-
-    placeWords();
-    fillEmpty();
-    renderGrid();
-    renderWords();
+    words.forEach(w => {
+      const li = document.createElement('li');
+      li.textContent = w;
+      wordsList.appendChild(li);
+    });
   </script>
 </body>
 </html>
