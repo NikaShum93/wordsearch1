@@ -1,0 +1,10 @@
+{
+  "name": "Wordsearch Game",
+  "description": "Создавайте свои собственные неоновые Wordsearch-игры с индивидуальными словами и уровнями сложности.",
+  "author": "NikaShum93",
+  "version": "1.0.0",
+  "main": "main.html",
+  "edit": "edit.html",
+  "icon": "https://raw.githubusercontent.com/NikaShum93/wordsearch/main/icon.png",
+  "cover": "https://raw.githubusercontent.com/NikaShum93/wordsearch/main/cover.png"
+}
