@@ -180,9 +180,9 @@
         cols
       });
 
-      const url = `main.html?${params.toString()}`;
-      document.getElementById('iframe').src = url;
-      document.getElementById('code').value = `<iframe src="${url}" width="800" height="600" style="border:none;"></iframe>`;
+      const fullURL = `https://nikashum93.github.io/wordsearch1/main.html?${params.toString()}`;
+      document.getElementById('iframe').src = fullURL;
+      document.getElementById('code').value = `<iframe src="${fullURL}" width="800" height="600" style="border:none;"></iframe>`;
     };
 
     document.querySelectorAll('input, select').forEach(el => {
