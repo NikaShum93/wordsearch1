@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Wordsearch by Nika Shum</title>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&family=Comic+Neue:wght@700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&family=Comic+Neue:wght@700&family=Press+Start+2P&family=Cinzel:wght@700&family=Luckiest+Guy&display=swap" rel="stylesheet">
   <style>
     :root {
       --cell-bg: #222;
@@ -14,32 +14,25 @@
       --error-bg: #f00;
     }
 
-    body.theme-neon {
-      --cell-bg: #222;
-      --cell-color: #fff;
-      --cell-glow: 0 0 10px #00f;
+    body.theme-light {
+      --cell-bg: #ffffff;
+      --cell-color: #000000;
+      --cell-glow: 0 0 8px var(--glow-color, #ff00ff);
     }
 
-    body.theme-classic {
-      --cell-bg: #fff;
-      --cell-color: #000;
+    body.theme-dark {
+      --cell-bg: #000000;
+      --cell-color: #00e5e5;
+      --cell-glow: 0 0 12px var(--glow-color, #00e5e5);
+    }
+
+    body.theme-rainbow {
+      --cell-bg: #fff3dc;
+      --cell-color: #000000;
       --cell-glow: none;
     }
 
-    body.theme-kid {
-      --cell-bg: #fffae3;
-      --cell-color: #000;
-      --cell-glow: 0 0 8px #f0f;
-    }
-
-    body.theme-lux {
-      --cell-bg: #111;
-      --cell-color: #ffd700;
-      --cell-glow: 0 0 12px gold;
-    }
-
     body {
-      font-family: 'Comic Neue', sans-serif;
       background: transparent;
       color: var(--cell-color);
       margin: 0;
@@ -145,10 +138,13 @@
     const level = url.searchParams.get("level") || "easy";
     const winText = url.searchParams.get("winText") || "Все слова найдены!";
     const sound = url.searchParams.get("sound") !== "0";
-    const glossy = url.searchParams.get("glossy") === "1";
-    const sparkles = url.searchParams.get("sparkles") === "1";
-    const theme = url.searchParams.get("theme") || "neon";
+    const theme = url.searchParams.get("theme") || "light";
+    const font = url.searchParams.get("font") || "Comic Neue";
+    const glowColor = url.searchParams.get("glowColor") || "#00ffff";
+
     document.body.classList.add("theme-" + theme);
+    document.body.style.setProperty('--glow-color', glowColor);
+    document.body.style.fontFamily = `'${font}', sans-serif`;
 
     const gridSize = 10;
     const directions = {
@@ -157,9 +153,7 @@
       hard: [ [1,0], [0,1], [1,1], [-1,1], [-1,0], [0,-1], [-1,-1], [1,-1] ]
     };
 
-    const grid = [];
-    const used = [];
-    const selected = [];
+    const grid = [], used = [], selected = [];
     const gridEl = document.getElementById("grid");
     const listEl = document.getElementById("wordsList");
 
@@ -223,7 +217,7 @@
         for (let c = 0; c < gridSize; c++) {
           const cell = document.createElement('div');
           cell.className = 'cell';
-          if (sparkles) cell.classList.add("rainbow");
+          if (theme === 'rainbow') cell.classList.add("rainbow");
           cell.textContent = grid[r][c];
           cell.dataset.row = r;
           cell.dataset.col = c;
