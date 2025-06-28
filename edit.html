@@ -92,6 +92,18 @@
     <label>Цвет фона букв (cellBg):</label>
     <input type="color" id="cellBg" value="#ffffff" />
 
+    <label>Включить блёстки и вспышку:</label>
+    <select id="glossy">
+      <option value="1">Да</option>
+      <option value="0">Нет</option>
+    </select>
+
+    <label>Звуковые эффекты:</label>
+    <select id="sound">
+      <option value="1">Включены</option>
+      <option value="0">Отключены</option>
+    </select>
+
     <label>Код вставки (iframe):</label>
     <textarea readonly id="code"></textarea>
   </div>
@@ -108,6 +120,8 @@
       const font = encodeURIComponent(document.getElementById('font').value);
       const glowColor = document.getElementById('glowColor').value;
       const cellBg = document.getElementById('cellBg').value;
+      const glossy = document.getElementById('glossy').value;
+      const sound = document.getElementById('sound').value;
 
       const params = new URLSearchParams({
         words,
@@ -115,7 +129,9 @@
         theme,
         font,
         glowColor,
-        cellBg
+        cellBg,
+        glossy,
+        sound
       });
 
       const url = `main.html?${params.toString()}`;
@@ -127,7 +143,7 @@
       el.addEventListener('input', update);
     });
 
-    update(); // первоначальный вызов
+    update();
   </script>
 </body>
 </html>
