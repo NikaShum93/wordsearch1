@@ -1,189 +1,154 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <title>Редактор Wordsearch by Nika Shum</title>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&family=Comic+Neue:wght@700&family=Press+Start+2P&family=Cinzel:wght@700&family=Luckiest+Guy&family=Chewy&family=Fredoka&family=Noto+Sans+JP&family=Noto+Sans+SC&display=swap" rel="stylesheet" />
+  <meta charset="UTF-8">
+  <title>Wordsearch by Nika Shum</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&family=Comic+Neue:wght@700&family=Press+Start+2P&family=Cinzel:wght@700&family=Luckiest+Guy&family=Chewy&family=Fredoka&family=Noto+Sans+JP&family=Noto+Sans+SC&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --cell-bg: #222;
+      --cell-color: #fff;
+      --cell-glow: 0 0 10px #00f;
+      --correct-bg: #0f0;
+      --correct-color: #000;
+      --error-bg: #f00;
+    }
+
+    body.theme-light {
+      --cell-bg: var(--cellBg, #ffffff);
+      --cell-color: var(--textColor, #000000);
+      --cell-glow: 0 0 8px var(--glow-color, #ff00ff);
+    }
+
+    body.theme-dark {
+      --cell-bg: var(--cellBg, #000000);
+      --cell-color: var(--textColor, #00e5e5);
+      --cell-glow: 0 0 12px var(--glow-color, #00e5e5);
+    }
+
+    body.theme-rainbow {
+      --cell-bg: var(--cellBg, #fff3dc);
+      --cell-color: var(--textColor, #000000);
+      --cell-glow: none;
+    }
+
     body {
-      font-family: 'Comic Neue', sans-serif;
-      background: #0b0b0f;
-      color: white;
+      background: transparent;
+      color: var(--cell-color);
       margin: 0;
-      padding: 20px;
+      padding: 0;
       display: flex;
-      gap: 30px;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      font-family: sans-serif;
     }
-    #editor {
-      flex: 1;
-      max-width: 500px;
+    #container {
+      display: flex;
+      flex-direction: row;
+      gap: 20px;
     }
-    label {
-      display: block;
-      margin-top: 15px;
-      font-weight: bold;
+    #game {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
-    input[type="text"], input[type="color"], select {
-      width: 100%;
-      padding: 8px;
-      margin-top: 5px;
-      border-radius: 6px;
-      border: none;
-      font-size: 16px;
+    #grid {
+      display: grid;
+      gap: 4px;
     }
-    #preview {
-      flex: 1;
-      min-height: 500px;
-      border: 3px solid #00ffff;
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 0 20px #00ffff;
+    .cell {
+      width: 44px;
+      height: 44px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: var(--cell-bg);
+      border-radius: 8px;
+      font-size: 20px;
+      color: var(--cell-color);
+      cursor: pointer;
+      transition: 0.2s;
+      user-select: none;
+      box-shadow: var(--cell-glow);
     }
-    iframe {
-      width: 100%;
-      height: 100%;
-      border: none;
+    .cell.selected {
+      background: rgba(200, 200, 200, 0.3);
     }
-    textarea {
-      width: 100%;
-      height: 100px;
-      margin-top: 15px;
-      font-size: 14px;
+    .cell.correct {
+      background: var(--correct-bg);
+      color: var(--correct-color);
     }
-    .logo {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 22px;
-      color: #00ffff;
-      margin-bottom: 20px;
+    .cell.error {
+      background: var(--error-bg);
+      animation: shake 0.3s;
+    }
+    .cell.rainbow {
+      animation: rainbow 1.5s infinite;
+    }
+    @keyframes rainbow {
+      0% { box-shadow: 0 0 8px red; }
+      25% { box-shadow: 0 0 8px orange; }
+      50% { box-shadow: 0 0 8px yellow; }
+      75% { box-shadow: 0 0 8px green; }
+      100% { box-shadow: 0 0 8px blue; }
+    }
+    @keyframes shake {
+      0% { transform: translate(1px, 1px); }
+      20% { transform: translate(-1px, 0px); }
+      40% { transform: translate(1px, -1px); }
+      60% { transform: translate(-1px, 1px); }
+      80% { transform: translate(1px, 0px); }
+      100% { transform: translate(0px, 0px); }
+    }
+    #wordsList {
+      list-style: none;
+      padding: 0;
+      font-size: 18px;
+      max-width: 180px;
+    }
+    #wordsList li {
+      margin-bottom: 8px;
+    }
+    #wordsList li.found {
+      text-decoration: line-through;
+      color: #aaa;
+    }
+    #messageBox {
+      margin-top: 10px;
+      font-size: 20px;
+      color: #0f0;
     }
   </style>
 </head>
 <body>
-  <div id="editor">
-    <div class="logo">Корпорация Геймификации Будущего</div>
-
-    <label>Слова (через запятую):</label>
-    <input type="text" id="words" value="МАМА,ПАПА,СЫР" />
-
-    <label>Финальный текст:</label>
-    <input type="text" id="winText" value="Все слова найдены!" />
-
-    <label>Язык:</label>
-    <select id="lang">
-      <option value="ru">Русский</option>
-      <option value="en">English</option>
-      <option value="de">Deutsch</option>
-      <option value="fr">Français</option>
-      <option value="es">Español</option>
-      <option value="it">Italiano</option>
-      <option value="zh">中文</option>
-      <option value="ja">日本語</option>
-    </select>
-
-    <label>Тема:</label>
-    <select id="theme">
-      <option value="light">Светлая</option>
-      <option value="dark">Тёмная</option>
-      <option value="rainbow">Радужная</option>
-    </select>
-
-    <label>Шрифт:</label>
-    <select id="font"></select>
-
-    <label>Цвет свечения (glow):</label>
-    <input type="color" id="glowColor" value="#00ffff" />
-
-    <label>Цвет фона букв (cellBg):</label>
-    <input type="color" id="cellBg" value="#ffffff" />
-
-    <label>Цвет букв (textColor):</label>
-    <input type="color" id="textColor" value="#000000" />
-
-    <label>Включить блёстки и вспышку:</label>
-    <select id="glossy">
-      <option value="1">Да</option>
-      <option value="0">Нет</option>
-    </select>
-
-    <label>Звуковые эффекты:</label>
-    <select id="sound">
-      <option value="1">Включены</option>
-      <option value="0">Отключены</option>
-    </select>
-
-    <label>Код вставки (iframe):</label>
-    <textarea readonly id="code"></textarea>
+  <div id="container">
+    <div id="game">
+      <div id="grid"></div>
+      <div id="messageBox"></div>
+    </div>
+    <ul id="wordsList"></ul>
   </div>
-
-  <div id="preview">
-    <iframe id="iframe" src=""></iframe>
-  </div>
-
+  <audio id="clickSound" src="https://nikashum93.github.io/wordsearch/click.mp3" preload="auto"></audio>
+  <audio id="errorSound" src="https://nikashum93.github.io/wordsearch/error.mp3" preload="auto"></audio>
+  <audio id="winSound" src="https://nikashum93.github.io/wordsearch/win.mp3" preload="auto"></audio>
   <script>
-    const fontSelect = document.getElementById('font');
-    const langSelect = document.getElementById('lang');
+    const url = new URL(window.location.href);
+    const words = (url.searchParams.get("words") || "МАМА,ПАПА,СЫР").toUpperCase().split(',');
+    const level = url.searchParams.get("level") || "easy";
+    const winText = url.searchParams.get("winText") || "Все слова найдены!";
+    const sound = url.searchParams.get("sound") !== "0";
+    const theme = url.searchParams.get("theme") || "light";
+    const font = url.searchParams.get("font") || "Comic Neue";
+    const glowColor = url.searchParams.get("glowColor") || "#00ffff";
+    const cellBg = url.searchParams.get("cellBg") || "";
+    const textColor = url.searchParams.get("textColor") || "";
 
-    const fontOptions = {
-      ru: ["Comic Neue", "Fredoka", "Cinzel"],
-      en: ["Comic Neue", "Orbitron", "Luckiest Guy", "Press Start 2P", "Cinzel", "Chewy", "Fredoka"],
-      de: ["Comic Neue", "Fredoka", "Cinzel"],
-      fr: ["Comic Neue", "Fredoka", "Cinzel"],
-      es: ["Comic Neue", "Fredoka", "Cinzel"],
-      it: ["Comic Neue", "Fredoka", "Cinzel"],
-      zh: ["Noto Sans SC"],
-      ja: ["Noto Sans JP"]
-    };
-
-    const updateFontOptions = () => {
-      const lang = langSelect.value;
-      const fonts = fontOptions[lang] || fontOptions["en"];
-      fontSelect.innerHTML = "";
-      fonts.forEach(font => {
-        const option = document.createElement("option");
-        option.value = font;
-        option.textContent = font;
-        fontSelect.appendChild(option);
-      });
-      update();
-    };
-
-    const update = () => {
-      const words = document.getElementById('words').value.trim();
-      const winText = encodeURIComponent(document.getElementById('winText').value.trim());
-      const theme = document.getElementById('theme').value;
-      const font = encodeURIComponent(document.getElementById('font').value);
-      const glowColor = document.getElementById('glowColor').value;
-      const cellBg = document.getElementById('cellBg').value;
-      const textColor = document.getElementById('textColor').value;
-      const glossy = document.getElementById('glossy').value;
-      const sound = document.getElementById('sound').value;
-      const lang = document.getElementById('lang').value;
-
-      const params = new URLSearchParams({
-        words,
-        winText,
-        theme,
-        font,
-        glowColor,
-        cellBg,
-        textColor,
-        glossy,
-        sound,
-        lang
-      });
-
-      const url = `main.html?${params.toString()}`;
-      document.getElementById('iframe').src = url;
-      document.getElementById('code').value = `<iframe src="${url}" width="800" height="600" style="border:none;"></iframe>`;
-    };
-
-    document.querySelectorAll('input, select').forEach(el => {
-      el.addEventListener('input', update);
-    });
-
-    langSelect.addEventListener('change', updateFontOptions);
-
-    updateFontOptions();
+    document.body.classList.add("theme-" + theme);
+    document.body.style.setProperty('--glow-color', glowColor);
+    if (cellBg) document.body.style.setProperty('--cellBg', cellBg);
+    if (textColor) document.body.style.setProperty('--textColor', textColor);
+    document.body.style.fontFamily = `'${font}', sans-serif`;
   </script>
 </body>
 </html>
