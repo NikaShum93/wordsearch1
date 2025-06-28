@@ -81,8 +81,8 @@
     </select>
 
     <label>Количество клеток (ширина x высота):</label>
-    <input type="number" id="cols" value="10" min="5" max="20" placeholder="Столбцы" />
-    <input type="number" id="rows" value="10" min="5" max="20" placeholder="Строки" />
+    <input type="number" id="cols" value="10" min="5" max="20" />
+    <input type="number" id="rows" value="10" min="5" max="20" />
 
     <label>Тема:</label>
     <select id="theme">
@@ -152,35 +152,22 @@
     };
 
     const update = () => {
-      const words = document.getElementById('words').value.trim();
-      const winText = encodeURIComponent(document.getElementById('winText').value.trim());
-      const theme = document.getElementById('theme').value;
-      const font = encodeURIComponent(document.getElementById('font').value);
-      const glowColor = document.getElementById('glowColor').value;
-      const cellBg = document.getElementById('cellBg').value;
-      const textColor = document.getElementById('textColor').value;
-      const glossy = document.getElementById('glossy').value;
-      const sound = document.getElementById('sound').value;
-      const lang = document.getElementById('lang').value;
-      const rows = document.getElementById('rows').value;
-      const cols = document.getElementById('cols').value;
-
       const params = new URLSearchParams({
-        words,
-        winText,
-        theme,
-        font,
-        glowColor,
-        cellBg,
-        textColor,
-        glossy,
-        sound,
-        lang,
-        rows,
-        cols
+        words: document.getElementById('words').value.trim(),
+        winText: document.getElementById('winText').value.trim(),
+        theme: document.getElementById('theme').value,
+        font: document.getElementById('font').value,
+        glowColor: document.getElementById('glowColor').value,
+        cellBg: document.getElementById('cellBg').value,
+        textColor: document.getElementById('textColor').value,
+        glossy: document.getElementById('glossy').value,
+        sound: document.getElementById('sound').value,
+        lang: document.getElementById('lang').value,
+        rows: document.getElementById('rows').value,
+        cols: document.getElementById('cols').value
       });
 
-      const url = `https://nikashum93.github.io/wordsearch1/main.html?${params.toString()}`;
+      const url = `main.html?${params.toString()}`;
       document.getElementById('iframe').src = url;
       document.getElementById('code').value = `<iframe src="${url}" width="800" height="600" style="border:none;"></iframe>`;
     };
