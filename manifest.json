@@ -1,7 +1,7 @@
 {
-  "name": "Wordsearch Game",
+  "name": "Поиск Слов",
   "description": "Создавайте свои собственные неоновые Wordsearch-игры с индивидуальными словами и уровнями сложности.",
-  "author": "NikaShum93",
+  "author": "KGB&NikaShum",
   "version": "1.0.0",
   "main": "main.html",
   "edit": "edit.html",
