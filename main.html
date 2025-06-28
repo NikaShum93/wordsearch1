@@ -5,7 +5,81 @@
   <title>Wordsearch by Nika Shum</title>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&family=Comic+Neue:wght@700&display=swap" rel="stylesheet">
   <style>
-    /* Стили как раньше */
+    body {
+      font-family: 'Comic Neue', sans-serif;
+      background: #000;
+      color: #fff;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    #container {
+      display: flex;
+      flex-direction: row;
+      gap: 20px;
+    }
+    #game {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    #grid {
+      display: grid;
+      gap: 4px;
+    }
+    .cell {
+      width: 44px;
+      height: 44px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #222;
+      border-radius: 8px;
+      font-size: 20px;
+      cursor: pointer;
+      transition: 0.2s;
+      user-select: none;
+    }
+    .cell.selected {
+      background: #444;
+    }
+    .cell.correct {
+      background: #0f0;
+      color: #000;
+    }
+    .cell.error {
+      background: #f00;
+    }
+    .cell.glossy {
+      box-shadow: 0 0 10px #00f;
+    }
+    .cell.rainbow {
+      animation: rainbow 1.5s infinite;
+    }
+    @keyframes rainbow {
+      0% { box-shadow: 0 0 8px red; }
+      25% { box-shadow: 0 0 8px orange; }
+      50% { box-shadow: 0 0 8px yellow; }
+      75% { box-shadow: 0 0 8px green; }
+      100% { box-shadow: 0 0 8px blue; }
+    }
+    #wordsList {
+      list-style: none;
+      padding: 0;
+      font-size: 18px;
+      max-width: 180px;
+    }
+    #wordsList li {
+      margin-bottom: 8px;
+    }
+    #messageBox {
+      margin-top: 10px;
+      font-size: 20px;
+      color: #0f0;
+    }
   </style>
 </head>
 <body>
