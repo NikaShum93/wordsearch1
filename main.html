@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>Wordsearch by Nika Shum</title>
   <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@700&display=swap" rel="stylesheet" />
   <style>
@@ -12,8 +12,13 @@
     }
     body {
       margin: 0;
-      font-family: 'Comic Neue', sans-serif;
       background: transparent;
+      font-family: 'Comic Neue', sans-serif;
+    }
+    body.theme-light {
+      --cell-bg: #ffffff;
+      --text-color: #000000;
+      --glow-color: #00ffff;
     }
     body.theme-dark {
       --cell-bg: #000000;
@@ -21,20 +26,10 @@
       --glow-color: #00e5e5;
     }
     body.theme-rainbow {
+      --cell-bg: #fff3dc;
+      --text-color: #000000;
       --glow-color: red;
     }
-    @keyframes rainbow {
-      0% { box-shadow: 0 0 10px red; }
-      25% { box-shadow: 0 0 10px orange; }
-      50% { box-shadow: 0 0 10px yellow; }
-      75% { box-shadow: 0 0 10px green; }
-      100% { box-shadow: 0 0 10px blue; }
-    }
-
-    body.finished .cell, body.finished #wordsList li {
-      animation: rainbow 2s infinite;
-    }
-
     #container {
       display: flex;
       gap: 30px;
@@ -71,7 +66,17 @@
     .cell.error {
       background: red;
     }
-
+    body.theme-rainbow .cell,
+    body.theme-rainbow #wordsList li {
+      animation: rainbow 2s infinite;
+    }
+    @keyframes rainbow {
+      0% { box-shadow: 0 0 10px red; }
+      25% { box-shadow: 0 0 10px orange; }
+      50% { box-shadow: 0 0 10px yellow; }
+      75% { box-shadow: 0 0 10px green; }
+      100% { box-shadow: 0 0 10px blue; }
+    }
     #wordsList {
       list-style: none;
       padding: 0;
@@ -85,13 +90,11 @@
       color: var(--text-color);
       border-radius: 8px;
       box-shadow: 0 0 6px var(--glow-color);
-      transition: all 0.3s;
     }
     #wordsList li.found {
       text-decoration: line-through;
       opacity: 0.5;
     }
-
     #messageBox {
       text-align: center;
       font-size: 22px;
@@ -138,6 +141,8 @@
     const messageBox = document.getElementById('messageBox');
     const grid = Array.from({ length: rows }, () => Array(cols).fill(''));
     const wordCoords = {};
+    const selected = [];
+    const found = new Set();
 
     function shuffle(array) {
       for (let i = array.length - 1; i > 0; i--) {
@@ -149,13 +154,14 @@
     function placeWords() {
       for (const word of words) {
         let placed = false;
-        for (let attempts = 0; attempts < 100 && !placed; attempts++) {
+        for (let attempt = 0; attempt < 100 && !placed; attempt++) {
           const dir = Math.floor(Math.random() * 8);
           const dx = [-1, 0, 1, -1, 1, -1, 0, 1][dir];
           const dy = [-1, -1, -1, 0, 0, 1, 1, 1][dir];
           const x = Math.floor(Math.random() * rows);
           const y = Math.floor(Math.random() * cols);
           let fits = true;
+          const tempCoords = [];
           for (let i = 0; i < word.length; i++) {
             const nx = x + dx * i;
             const ny = y + dy * i;
@@ -163,23 +169,22 @@
               fits = false;
               break;
             }
+            tempCoords.push(`${nx}-${ny}`);
           }
           if (fits) {
-            wordCoords[word] = [];
-            for (let i = 0; i < word.length; i++) {
-              const nx = x + dx * i;
-              const ny = y + dy * i;
+            tempCoords.forEach((coord, i) => {
+              const [nx, ny] = coord.split('-').map(Number);
               grid[nx][ny] = word[i];
-              wordCoords[word].push([nx, ny]);
-            }
+            });
+            wordCoords[word] = tempCoords;
             placed = true;
           }
         }
       }
     }
 
-    function fillRandomLetters() {
-      const abc = alphabets[lang] || alphabets['en'];
+    function fillGrid() {
+      const abc = alphabets[lang] || alphabets.en;
       for (let i = 0; i < rows; i++) {
         for (let j = 0; j < cols; j++) {
           if (!grid[i][j]) {
@@ -204,68 +209,53 @@
       }
     }
 
-    let selected = [];
-
-    function getSelectedWord() {
-      return selected.map(c => c.textContent).join('');
+    function resetSelection() {
+      selected.forEach(c => c.classList.remove("selected", "error"));
+      selected.length = 0;
     }
 
-    function isCorrectSelection() {
-      const str = getSelectedWord();
-      return words.includes(str) || words.includes(str.split('').reverse().join(''));
-    }
-
-    function markCorrect(word) {
-      selected.forEach(c => c.classList.add('correct'));
-      document.querySelectorAll("#wordsList li").forEach(li => {
-        if (li.textContent === word || li.textContent === word.split('').reverse().join('')) {
-          li.classList.add('found');
+    function checkSelected() {
+      const coords = selected.map(c => `${c.dataset.row}-${c.dataset.col}`);
+      for (const [word, wordCells] of Object.entries(wordCoords)) {
+        if (!found.has(word) && (arraysEqual(coords, wordCells) || arraysEqual(coords, wordCells.slice().reverse()))) {
+          selected.forEach(c => c.classList.add("correct"));
+          const li = [...wordsList.children].find(el => el.textContent === word);
+          if (li) li.classList.add("found");
+          found.add(word);
+          if (sound) new Audio("https://nikashum93.github.io/pusyriki/assets/pop.mp3").play();
+          if (found.size === words.length) {
+            messageBox.textContent = decodeURIComponent(winText);
+            gridElement.querySelectorAll(".cell").forEach(cell => {
+              cell.classList.add("rainbow");
+            });
+          }
+          return resetSelection();
         }
-      });
-    }
-
-    function checkWin() {
-      const foundAll = Array.from(document.querySelectorAll('#wordsList li')).every(li => li.classList.contains('found'));
-      if (foundAll) {
-        messageBox.textContent = decodeURIComponent(winText);
-        document.body.classList.add("finished");
-        if (sound) new Audio("win.mp3").play();
       }
+      selected.forEach(c => c.classList.add("error"));
+      setTimeout(resetSelection, 400);
     }
 
-    gridElement.addEventListener('click', e => {
-      const cell = e.target.closest('.cell');
-      if (!cell || cell.classList.contains('correct')) return;
-      cell.classList.add('selected');
+    function arraysEqual(a, b) {
+      return a.length === b.length && a.every((v, i) => v === b[i]);
+    }
+
+    gridElement.addEventListener("click", e => {
+      const cell = e.target.closest(".cell");
+      if (!cell || cell.classList.contains("correct")) return;
+      cell.classList.add("selected");
       selected.push(cell);
-      if (selected.length > 1) {
-        const word = getSelectedWord();
-        const reversed = word.split('').reverse().join('');
-        if (words.includes(word) || words.includes(reversed)) {
-          markCorrect(word);
-          if (sound) new Audio("click.mp3").play();
-          checkWin();
-        } else {
-          selected.forEach(c => c.classList.add('error'));
-          setTimeout(() => {
-            selected.forEach(c => c.classList.remove('error', 'selected'));
-            selected = [];
-          }, 300);
-          if (sound) new Audio("error.mp3").play();
-          return;
-        }
-        selected = [];
-      }
+      if (selected.length >= 2) checkSelected();
     });
 
-    words.forEach(w => {
-      const li = document.createElement('li');
-      li.textContent = w;
+    words.forEach(word => {
+      const li = document.createElement("li");
+      li.textContent = word;
       wordsList.appendChild(li);
     });
 
     placeWords();
-    fillRandomLetters();
+    fillGrid();
     createGrid();
   </script>
 </body>
