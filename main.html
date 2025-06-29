@@ -21,17 +21,18 @@
       --glow-color: #00e5e5;
     }
     body.theme-rainbow {
-      --cell-bg: #fff3dc;
-      --text-color: #000000;
       --glow-color: red;
     }
-
     @keyframes rainbow {
-      0% { box-shadow: 0 0 8px red; }
-      25% { box-shadow: 0 0 8px orange; }
-      50% { box-shadow: 0 0 8px yellow; }
-      75% { box-shadow: 0 0 8px green; }
-      100% { box-shadow: 0 0 8px blue; }
+      0% { box-shadow: 0 0 10px red; }
+      25% { box-shadow: 0 0 10px orange; }
+      50% { box-shadow: 0 0 10px yellow; }
+      75% { box-shadow: 0 0 10px green; }
+      100% { box-shadow: 0 0 10px blue; }
+    }
+
+    body.finished .cell, body.finished #wordsList li {
+      animation: rainbow 2s infinite;
     }
 
     #container {
@@ -41,12 +42,10 @@
       align-items: center;
       padding: 20px;
     }
-
     #grid {
       display: grid;
       gap: 4px;
     }
-
     .cell {
       width: 44px;
       height: 44px;
@@ -62,13 +61,15 @@
       box-shadow: 0 0 10px var(--glow-color);
       transition: background 0.3s;
     }
-    .cell.selected { background: rgba(255,255,255,0.2); }
-    .cell.correct { background: lime; color: black; }
-    .cell.error { background: red; }
-
-    body.theme-rainbow .cell,
-    body.theme-rainbow #wordsList li {
-      animation: rainbow 2s infinite;
+    .cell.selected {
+      background: rgba(255,255,255,0.2);
+    }
+    .cell.correct {
+      background: lime;
+      color: black;
+    }
+    .cell.error {
+      background: red;
     }
 
     #wordsList {
@@ -107,7 +108,6 @@
     </div>
     <ul id="wordsList"></ul>
   </div>
-
   <script>
     const url = new URL(window.location.href);
     const words = (url.searchParams.get("words") || "МАМА,ПАПА,СЫР").toUpperCase().split(',');
@@ -120,7 +120,6 @@
     const cellBg = url.searchParams.get("cellBg") || "#ffffff";
     const textColor = url.searchParams.get("textColor") || "#000000";
     const sound = url.searchParams.get("sound") !== "0";
-    const glossy = url.searchParams.get("glossy") === "1";
     const lang = url.searchParams.get("lang") || "ru";
 
     document.body.classList.add("theme-" + theme);
@@ -138,7 +137,7 @@
     const wordsList = document.getElementById('wordsList');
     const messageBox = document.getElementById('messageBox');
     const grid = Array.from({ length: rows }, () => Array(cols).fill(''));
-    const placedWords = [];
+    const wordCoords = {};
 
     function shuffle(array) {
       for (let i = array.length - 1; i > 0; i--) {
@@ -166,11 +165,12 @@
             }
           }
           if (fits) {
+            wordCoords[word] = [];
             for (let i = 0; i < word.length; i++) {
               const nx = x + dx * i;
               const ny = y + dy * i;
               grid[nx][ny] = word[i];
-              placedWords.push({ x: nx, y: ny, word });
+              wordCoords[word].push([nx, ny]);
             }
             placed = true;
           }
@@ -204,72 +204,58 @@
       }
     }
 
-    const selected = [];
-    const found = [];
+    let selected = [];
 
-    function sparkle(x, y) {
-      if (!glossy) return;
-      for (let i = 0; i < 20; i++) {
-        const s = document.createElement('div');
-        s.style.position = 'absolute';
-        s.style.left = `${x}px`;
-        s.style.top = `${y}px`;
-        s.style.width = '4px';
-        s.style.height = '4px';
-        s.style.borderRadius = '50%';
-        s.style.background = glowColor;
-        s.style.opacity = Math.random();
-        s.style.pointerEvents = 'none';
-        document.body.appendChild(s);
-        const dx = (Math.random() - 0.5) * 100;
-        const dy = (Math.random() - 0.5) * 100;
-        s.animate([{ transform: 'translate(0, 0)' }, { transform: `translate(${dx}px, ${dy}px)` }], {
-          duration: 800,
-          easing: 'ease-out'
-        });
-        setTimeout(() => s.remove(), 800);
-      }
+    function getSelectedWord() {
+      return selected.map(c => c.textContent).join('');
     }
 
-    function checkWord() {
-      const word = selected.map(c => c.textContent).join('');
-      const reversed = word.split('').reverse().join('');
-      const match = words.find(w => w === word || w === reversed);
-      if (match) {
-        selected.forEach(c => c.classList.add('correct'));
-        document.querySelectorAll("#wordsList li").forEach(li => {
-          if (li.textContent === match) li.classList.add('found');
-        });
-        found.push(match);
-        if (sound) new Audio('https://nikashum93.github.io/pusyriki/assets/pop.mp3').play();
-        if (found.length === words.length) {
-          messageBox.textContent = decodeURIComponent(winText);
-          document.querySelectorAll('.cell').forEach(c => c.classList.add('rainbow'));
-          document.querySelectorAll('#wordsList li').forEach(li => li.classList.add('rainbow'));
+    function isCorrectSelection() {
+      const str = getSelectedWord();
+      return words.includes(str) || words.includes(str.split('').reverse().join(''));
+    }
+
+    function markCorrect(word) {
+      selected.forEach(c => c.classList.add('correct'));
+      document.querySelectorAll("#wordsList li").forEach(li => {
+        if (li.textContent === word || li.textContent === word.split('').reverse().join('')) {
+          li.classList.add('found');
         }
-      } else {
-        selected.forEach(c => {
-          c.classList.add('error');
-          setTimeout(() => c.classList.remove('error', 'selected'), 300);
-        });
+      });
+    }
+
+    function checkWin() {
+      const foundAll = Array.from(document.querySelectorAll('#wordsList li')).every(li => li.classList.contains('found'));
+      if (foundAll) {
+        messageBox.textContent = decodeURIComponent(winText);
+        document.body.classList.add("finished");
+        if (sound) new Audio("win.mp3").play();
       }
-      selected.length = 0;
     }
 
     gridElement.addEventListener('click', e => {
       const cell = e.target.closest('.cell');
       if (!cell || cell.classList.contains('correct')) return;
-      const { row, col } = cell.dataset;
-      if (selected.length > 0) {
-        const last = selected[selected.length - 1];
-        const dRow = Math.abs(row - last.dataset.row);
-        const dCol = Math.abs(col - last.dataset.col);
-        if (!(dRow <= 1 && dCol <= 1)) return;
-      }
       cell.classList.add('selected');
       selected.push(cell);
-      if (sound) sparkle(e.pageX, e.pageY);
-      if (selected.length > 1) checkWord();
+      if (selected.length > 1) {
+        const word = getSelectedWord();
+        const reversed = word.split('').reverse().join('');
+        if (words.includes(word) || words.includes(reversed)) {
+          markCorrect(word);
+          if (sound) new Audio("click.mp3").play();
+          checkWin();
+        } else {
+          selected.forEach(c => c.classList.add('error'));
+          setTimeout(() => {
+            selected.forEach(c => c.classList.remove('error', 'selected'));
+            selected = [];
+          }, 300);
+          if (sound) new Audio("error.mp3").play();
+          return;
+        }
+        selected = [];
+      }
     });
 
     words.forEach(w => {
