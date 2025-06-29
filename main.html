@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Wordsearch by Nika Shum</title>
   <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@700&display=swap" rel="stylesheet" />
   <style>
@@ -21,8 +21,19 @@
       --glow-color: #00e5e5;
     }
     body.theme-rainbow {
+      --cell-bg: #fff3dc;
+      --text-color: #000000;
       --glow-color: red;
     }
+
+    @keyframes rainbow {
+      0% { box-shadow: 0 0 8px red; }
+      25% { box-shadow: 0 0 8px orange; }
+      50% { box-shadow: 0 0 8px yellow; }
+      75% { box-shadow: 0 0 8px green; }
+      100% { box-shadow: 0 0 8px blue; }
+    }
+
     #container {
       display: flex;
       gap: 30px;
@@ -30,10 +41,12 @@
       align-items: center;
       padding: 20px;
     }
+
     #grid {
       display: grid;
       gap: 4px;
     }
+
     .cell {
       width: 44px;
       height: 44px;
@@ -49,26 +62,15 @@
       box-shadow: 0 0 10px var(--glow-color);
       transition: background 0.3s;
     }
-    .cell.selected {
-      background: rgba(255,255,255,0.2);
-    }
-    .cell.correct {
-      background: lime;
-      color: black;
-    }
-    .cell.error {
-      background: red;
-    }
-    @keyframes rainbow {
-      0% { box-shadow: 0 0 10px red; }
-      25% { box-shadow: 0 0 10px orange; }
-      50% { box-shadow: 0 0 10px yellow; }
-      75% { box-shadow: 0 0 10px green; }
-      100% { box-shadow: 0 0 10px blue; }
-    }
-    body.theme-rainbow .cell {
+    .cell.selected { background: rgba(255,255,255,0.2); }
+    .cell.correct { background: lime; color: black; }
+    .cell.error { background: red; }
+
+    body.theme-rainbow .cell,
+    body.theme-rainbow #wordsList li {
       animation: rainbow 2s infinite;
     }
+
     #wordsList {
       list-style: none;
       padding: 0;
@@ -82,11 +84,13 @@
       color: var(--text-color);
       border-radius: 8px;
       box-shadow: 0 0 6px var(--glow-color);
+      transition: all 0.3s;
     }
     #wordsList li.found {
       text-decoration: line-through;
       opacity: 0.5;
     }
+
     #messageBox {
       text-align: center;
       font-size: 22px;
@@ -103,6 +107,7 @@
     </div>
     <ul id="wordsList"></ul>
   </div>
+
   <script>
     const url = new URL(window.location.href);
     const words = (url.searchParams.get("words") || "МАМА,ПАПА,СЫР").toUpperCase().split(',');
@@ -202,29 +207,6 @@
     const selected = [];
     const found = [];
 
-    function checkWord() {
-      const word = selected.map(cell => cell.textContent).join('');
-      const reversed = word.split('').reverse().join('');
-      const match = words.find(w => w === word || w === reversed);
-      if (match) {
-        selected.forEach(c => c.classList.add('correct'));
-        document.querySelectorAll("#wordsList li").forEach(li => {
-          if (li.textContent === match) li.classList.add('found');
-        });
-        found.push(match);
-        if (sound) new Audio('https://nikashum93.github.io/pusyriki/assets/pop.mp3').play();
-        if (found.length === words.length) {
-          messageBox.textContent = decodeURIComponent(winText);
-        }
-      } else {
-        selected.forEach(c => {
-          c.classList.add('error');
-          setTimeout(() => c.classList.remove('error', 'selected'), 300);
-        });
-      }
-      selected.length = 0;
-    }
-
     function sparkle(x, y) {
       if (!glossy) return;
       for (let i = 0; i < 20; i++) {
@@ -241,15 +223,37 @@
         document.body.appendChild(s);
         const dx = (Math.random() - 0.5) * 100;
         const dy = (Math.random() - 0.5) * 100;
-        s.animate([
-          { transform: 'translate(0, 0)' },
-          { transform: `translate(${dx}px, ${dy}px)` }
-        ], {
+        s.animate([{ transform: 'translate(0, 0)' }, { transform: `translate(${dx}px, ${dy}px)` }], {
           duration: 800,
           easing: 'ease-out'
         });
         setTimeout(() => s.remove(), 800);
       }
+    }
+
+    function checkWord() {
+      const word = selected.map(c => c.textContent).join('');
+      const reversed = word.split('').reverse().join('');
+      const match = words.find(w => w === word || w === reversed);
+      if (match) {
+        selected.forEach(c => c.classList.add('correct'));
+        document.querySelectorAll("#wordsList li").forEach(li => {
+          if (li.textContent === match) li.classList.add('found');
+        });
+        found.push(match);
+        if (sound) new Audio('https://nikashum93.github.io/pusyriki/assets/pop.mp3').play();
+        if (found.length === words.length) {
+          messageBox.textContent = decodeURIComponent(winText);
+          document.querySelectorAll('.cell').forEach(c => c.classList.add('rainbow'));
+          document.querySelectorAll('#wordsList li').forEach(li => li.classList.add('rainbow'));
+        }
+      } else {
+        selected.forEach(c => {
+          c.classList.add('error');
+          setTimeout(() => c.classList.remove('error', 'selected'), 300);
+        });
+      }
+      selected.length = 0;
     }
 
     gridElement.addEventListener('click', e => {
