@@ -9,26 +9,22 @@
       --cell-bg: #ffffff;
       --text-color: #000000;
       --glow-color: #00ffff;
+      --selected-color: rgba(0,255,255,0.3);
     }
     body {
       margin: 0;
-      background: transparent;
       font-family: 'Comic Neue', sans-serif;
+      background: transparent;
     }
     body.theme-light {
       --cell-bg: #ffffff;
       --text-color: #000000;
       --glow-color: #00ffff;
-    }
-    body.theme-dark {
-      --cell-bg: #000000;
-      --text-color: #00e5e5;
-      --glow-color: #00e5e5;
+      --selected-color: rgba(0,255,255,0.3);
     }
     body.theme-rainbow {
-      --cell-bg: #fff3dc;
-      --text-color: #000000;
       --glow-color: red;
+      --selected-color: rgba(255,0,0,0.2);
     }
     #container {
       display: flex;
@@ -57,7 +53,7 @@
       transition: background 0.3s;
     }
     .cell.selected {
-      background: rgba(255,255,255,0.2);
+      background: var(--selected-color);
     }
     .cell.correct {
       background: lime;
@@ -66,16 +62,16 @@
     .cell.error {
       background: red;
     }
-    body.theme-rainbow .cell,
-    body.theme-rainbow #wordsList li {
-      animation: rainbow 2s infinite;
-    }
     @keyframes rainbow {
       0% { box-shadow: 0 0 10px red; }
       25% { box-shadow: 0 0 10px orange; }
       50% { box-shadow: 0 0 10px yellow; }
       75% { box-shadow: 0 0 10px green; }
       100% { box-shadow: 0 0 10px blue; }
+    }
+    body.theme-rainbow .cell,
+    body.theme-rainbow #wordsList li {
+      animation: rainbow 2s infinite;
     }
     #wordsList {
       list-style: none;
@@ -140,57 +136,51 @@
     const wordsList = document.getElementById('wordsList');
     const messageBox = document.getElementById('messageBox');
     const grid = Array.from({ length: rows }, () => Array(cols).fill(''));
-    const wordCoords = {};
-    const selected = [];
-    const found = new Set();
 
-    function shuffle(array) {
-      for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
-      }
-    }
+    const directions = [
+      { dx: 1, dy: 0 },
+      { dx: 0, dy: 1 },
+      { dx: 1, dy: 1 },
+      { dx: -1, dy: 0 },
+      { dx: 0, dy: -1 },
+      { dx: -1, dy: -1 },
+      { dx: 1, dy: -1 },
+      { dx: -1, dy: 1 }
+    ];
+
+    const positions = {};
 
     function placeWords() {
-  // Сортируем слова от самых длинных к коротким
-  const sortedWords = [...words].sort((a, b) => b.length - a.length);
-
-  for (const word of sortedWords) {
-    let placed = false;
-    for (let attempt = 0; attempt < 500 && !placed; attempt++) {
-      const dir = Math.floor(Math.random() * 8);
-      const dx = [-1, 0, 1, -1, 1, -1, 0, 1][dir];
-      const dy = [-1, -1, -1, 0, 0, 1, 1, 1][dir];
-      const x = Math.floor(Math.random() * rows);
-      const y = Math.floor(Math.random() * cols);
-      let fits = true;
-      const tempCoords = [];
-      for (let i = 0; i < word.length; i++) {
-        const nx = x + dx * i;
-        const ny = y + dy * i;
-        if (nx < 0 || ny < 0 || nx >= rows || ny >= cols || (grid[nx][ny] && grid[nx][ny] !== word[i])) {
-          fits = false;
-          break;
+      for (const word of words) {
+        let placed = false;
+        for (let attempt = 0; attempt < 100 && !placed; attempt++) {
+          const dir = directions[Math.floor(Math.random() * directions.length)];
+          const x = Math.floor(Math.random() * rows);
+          const y = Math.floor(Math.random() * cols);
+          let fits = true;
+          for (let i = 0; i < word.length; i++) {
+            const nx = x + dir.dx * i;
+            const ny = y + dir.dy * i;
+            if (nx < 0 || ny < 0 || nx >= rows || ny >= cols || (grid[nx][ny] && grid[nx][ny] !== word[i])) {
+              fits = false;
+              break;
+            }
+          }
+          if (fits) {
+            for (let i = 0; i < word.length; i++) {
+              const nx = x + dir.dx * i;
+              const ny = y + dir.dy * i;
+              grid[nx][ny] = word[i];
+              positions[`${nx},${ny}`] = word;
+            }
+            placed = true;
+          }
         }
-        tempCoords.push(`${nx}-${ny}`);
-      }
-      if (fits) {
-        tempCoords.forEach((coord, i) => {
-          const [nx, ny] = coord.split('-').map(Number);
-          grid[nx][ny] = word[i];
-        });
-        wordCoords[word] = tempCoords;
-        placed = true;
       }
     }
-    if (!placed) {
-      console.warn(`⚠️ Слово "${word}" не удалось вставить в сетку`);
-    }
-  }
-}
 
-    function fillGrid() {
-      const abc = alphabets[lang] || alphabets.en;
+    function fillRandomLetters() {
+      const abc = alphabets[lang] || alphabets['en'];
       for (let i = 0; i < rows; i++) {
         for (let j = 0; j < cols; j++) {
           if (!grid[i][j]) {
@@ -215,53 +205,49 @@
       }
     }
 
-    function resetSelection() {
-      selected.forEach(c => c.classList.remove("selected", "error"));
+    const selected = [];
+    const found = [];
+
+    function checkWord() {
+      const word = selected.map(c => c.textContent).join('');
+      const reversed = word.split('').reverse().join('');
+      const match = words.find(w => w === word || w === reversed);
+      if (match && !found.includes(match)) {
+        selected.forEach(c => c.classList.add('correct'));
+        document.querySelectorAll("#wordsList li").forEach(li => {
+          if (li.textContent === match) li.classList.add('found');
+        });
+        found.push(match);
+        if (sound) new Audio("win.mp3").play();
+        if (found.length === words.length) {
+          messageBox.textContent = decodeURIComponent(winText);
+          document.body.classList.add('theme-rainbow');
+        }
+      } else {
+        selected.forEach(c => {
+          c.classList.add('error');
+          setTimeout(() => c.classList.remove('error', 'selected'), 300);
+        });
+      }
       selected.length = 0;
     }
 
-    function checkSelected() {
-      const coords = selected.map(c => `${c.dataset.row}-${c.dataset.col}`);
-      for (const [word, wordCells] of Object.entries(wordCoords)) {
-        if (!found.has(word) && (arraysEqual(coords, wordCells) || arraysEqual(coords, wordCells.slice().reverse()))) {
-          selected.forEach(c => c.classList.add("correct"));
-          const li = [...wordsList.children].find(el => el.textContent === word);
-          if (li) li.classList.add("found");
-          found.add(word);
-          if (sound) new Audio("https://nikashum93.github.io/pusyriki/assets/pop.mp3").play();
-          if (found.size === words.length) {
-            messageBox.textContent = decodeURIComponent(winText);
-            gridElement.querySelectorAll(".cell").forEach(cell => {
-              cell.classList.add("rainbow");
-            });
-          }
-          return resetSelection();
-        }
-      }
-      selected.forEach(c => c.classList.add("error"));
-      setTimeout(resetSelection, 400);
-    }
-
-    function arraysEqual(a, b) {
-      return a.length === b.length && a.every((v, i) => v === b[i]);
-    }
-
-    gridElement.addEventListener("click", e => {
-      const cell = e.target.closest(".cell");
-      if (!cell || cell.classList.contains("correct")) return;
-      cell.classList.add("selected");
+    gridElement.addEventListener('click', e => {
+      const cell = e.target.closest('.cell');
+      if (!cell || cell.classList.contains('correct')) return;
+      cell.classList.add('selected');
       selected.push(cell);
-      if (selected.length >= 2) checkSelected();
+      if (selected.length > 1) checkWord();
     });
 
-    words.forEach(word => {
-      const li = document.createElement("li");
-      li.textContent = word;
+    words.forEach(w => {
+      const li = document.createElement('li');
+      li.textContent = w;
       wordsList.appendChild(li);
     });
 
     placeWords();
-    fillGrid();
+    fillRandomLetters();
     createGrid();
   </script>
 </body>
