@@ -152,36 +152,42 @@
     }
 
     function placeWords() {
-      for (const word of words) {
-        let placed = false;
-        for (let attempt = 0; attempt < 100 && !placed; attempt++) {
-          const dir = Math.floor(Math.random() * 8);
-          const dx = [-1, 0, 1, -1, 1, -1, 0, 1][dir];
-          const dy = [-1, -1, -1, 0, 0, 1, 1, 1][dir];
-          const x = Math.floor(Math.random() * rows);
-          const y = Math.floor(Math.random() * cols);
-          let fits = true;
-          const tempCoords = [];
-          for (let i = 0; i < word.length; i++) {
-            const nx = x + dx * i;
-            const ny = y + dy * i;
-            if (nx < 0 || ny < 0 || nx >= rows || ny >= cols || (grid[nx][ny] && grid[nx][ny] !== word[i])) {
-              fits = false;
-              break;
-            }
-            tempCoords.push(`${nx}-${ny}`);
-          }
-          if (fits) {
-            tempCoords.forEach((coord, i) => {
-              const [nx, ny] = coord.split('-').map(Number);
-              grid[nx][ny] = word[i];
-            });
-            wordCoords[word] = tempCoords;
-            placed = true;
-          }
+  // Сортируем слова от самых длинных к коротким
+  const sortedWords = [...words].sort((a, b) => b.length - a.length);
+
+  for (const word of sortedWords) {
+    let placed = false;
+    for (let attempt = 0; attempt < 500 && !placed; attempt++) {
+      const dir = Math.floor(Math.random() * 8);
+      const dx = [-1, 0, 1, -1, 1, -1, 0, 1][dir];
+      const dy = [-1, -1, -1, 0, 0, 1, 1, 1][dir];
+      const x = Math.floor(Math.random() * rows);
+      const y = Math.floor(Math.random() * cols);
+      let fits = true;
+      const tempCoords = [];
+      for (let i = 0; i < word.length; i++) {
+        const nx = x + dx * i;
+        const ny = y + dy * i;
+        if (nx < 0 || ny < 0 || nx >= rows || ny >= cols || (grid[nx][ny] && grid[nx][ny] !== word[i])) {
+          fits = false;
+          break;
         }
+        tempCoords.push(`${nx}-${ny}`);
+      }
+      if (fits) {
+        tempCoords.forEach((coord, i) => {
+          const [nx, ny] = coord.split('-').map(Number);
+          grid[nx][ny] = word[i];
+        });
+        wordCoords[word] = tempCoords;
+        placed = true;
       }
     }
+    if (!placed) {
+      console.warn(`⚠️ Слово "${word}" не удалось вставить в сетку`);
+    }
+  }
+}
 
     function fillGrid() {
       const abc = alphabets[lang] || alphabets.en;
