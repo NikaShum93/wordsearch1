@@ -1,50 +1,259 @@
-function placeWords() {
-  for (const word of words) {
-    let placed = false;
-    for (let attempts = 0; attempts < 1000 && !placed; attempts++) {
-      const directions = [
-        { dx: 1, dy: 0 },   // →
-        { dx: -1, dy: 0 },  // ←
-        { dx: 0, dy: 1 },   // ↓
-        { dx: 0, dy: -1 },  // ↑
-        { dx: 1, dy: 1 },   // ↘
-        { dx: -1, dy: -1 }, // ↖
-        { dx: 1, dy: -1 },  // ↗
-        { dx: -1, dy: 1 }   // ↙
-      ];
-      const dir = directions[Math.floor(Math.random() * directions.length)];
-      const len = word.length;
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Wordsearch by Nika Shum</title>
+  <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --cell-bg: #ffffff;
+      --cell-border: #bbb;
+      --cell-highlight: #aaccff;
+      --cell-error: #ffaaaa;
+      --cell-correct: #c0ffc0;
+      --text-color: #000;
+      --font-family: 'Comfortaa', sans-serif;
+    }
 
-      const startX = dir.dx === 1 ? Math.floor(Math.random() * (rows - len)) :
-                     dir.dx === -1 ? Math.floor(Math.random() * (rows - len)) + len - 1 :
-                     Math.floor(Math.random() * rows);
+    body {
+      font-family: var(--font-family);
+      background: #fff;
+      color: var(--text-color);
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 20px;
+      padding: 20px;
+    }
 
-      const startY = dir.dy === 1 ? Math.floor(Math.random() * (cols - len)) :
-                     dir.dy === -1 ? Math.floor(Math.random() * (cols - len)) + len - 1 :
-                     Math.floor(Math.random() * cols);
+    #grid {
+      display: grid;
+      grid-template-columns: repeat(10, 40px);
+      grid-gap: 5px;
+    }
 
-      let fits = true;
-      for (let i = 0; i < len; i++) {
-        const nx = startX + dir.dx * i;
-        const ny = startY + dir.dy * i;
-        if (
-          nx < 0 || ny < 0 || nx >= rows || ny >= cols ||
-          (grid[nx][ny] && grid[nx][ny] !== word[i])
-        ) {
-          fits = false;
-          break;
+    .cell {
+      width: 40px;
+      height: 40px;
+      background: var(--cell-bg);
+      border: 2px solid var(--cell-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      cursor: pointer;
+      transition: background 0.2s, border 0.2s;
+      border-radius: 8px;
+      user-select: none;
+    }
+
+    .cell.highlight {
+      background: var(--cell-highlight);
+    }
+
+    .cell.correct {
+      background: var(--cell-correct);
+    }
+
+    .cell.error {
+      background: var(--cell-error);
+    }
+
+    #wordList {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .word-item {
+      padding: 5px 10px;
+      background: var(--cell-bg);
+      border: 2px solid var(--cell-border);
+      border-radius: 8px;
+      text-align: center;
+      font-weight: bold;
+    }
+
+    .word-item.found {
+      text-decoration: line-through;
+      color: gray;
+    }
+
+    .rainbow {
+      animation: rainbow 2s infinite;
+    }
+
+    @keyframes rainbow {
+      0% { border-color: red; }
+      14% { border-color: orange; }
+      28% { border-color: yellow; }
+      42% { border-color: green; }
+      57% { border-color: blue; }
+      71% { border-color: indigo; }
+      85% { border-color: violet; }
+      100% { border-color: red; }
+    }
+  </style>
+</head>
+<body>
+  <div id="grid"></div>
+  <div id="wordList"></div>
+
+  <audio id="clickSound" src="click.mp3"></audio>
+  <audio id="errorSound" src="error.mp3"></audio>
+  <audio id="winSound" src="win.mp3"></audio>
+
+  <script>
+    const words = ['МАЛОКО', 'ПОГОДАИЗМЕНЧИВА', 'МЕДВЕДЬ', 'МАМА', 'ПАПА', 'СЫР'];
+    const rows = 10;
+    const cols = 10;
+    const grid = [];
+    const placedWords = [];
+
+    const directions = [
+      { dx: 1, dy: 0 }, { dx: -1, dy: 0 }, { dx: 0, dy: 1 }, { dx: 0, dy: -1 },
+      { dx: 1, dy: 1 }, { dx: -1, dy: -1 }, { dx: -1, dy: 1 }, { dx: 1, dy: -1 },
+    ];
+
+    function initGrid() {
+      for (let i = 0; i < rows; i++) {
+        grid[i] = [];
+        for (let j = 0; j < cols; j++) {
+          grid[i][j] = '';
         }
-      }
-
-      if (fits) {
-        for (let i = 0; i < len; i++) {
-          const nx = startX + dir.dx * i;
-          const ny = startY + dir.dy * i;
-          grid[nx][ny] = word[i];
-          placedWords.push({ x: nx, y: ny, word });
-        }
-        placed = true;
       }
     }
-  }
-}
+
+    function placeWords() {
+      for (const word of words) {
+        let placed = false;
+        for (let attempts = 0; attempts < 1000 && !placed; attempts++) {
+          const dir = directions[Math.floor(Math.random() * directions.length)];
+          const len = word.length;
+
+          let startX = dir.dx === 1 ? Math.floor(Math.random() * (rows - len)) :
+                      dir.dx === -1 ? Math.floor(Math.random() * (rows - len)) + len - 1 :
+                      Math.floor(Math.random() * rows);
+          let startY = dir.dy === 1 ? Math.floor(Math.random() * (cols - len)) :
+                      dir.dy === -1 ? Math.floor(Math.random() * (cols - len)) + len - 1 :
+                      Math.floor(Math.random() * cols);
+
+          let fits = true;
+          for (let i = 0; i < len; i++) {
+            const nx = startX + dir.dx * i;
+            const ny = startY + dir.dy * i;
+            if (nx < 0 || ny < 0 || nx >= rows || ny >= cols ||
+                (grid[nx][ny] && grid[nx][ny] !== word[i])) {
+              fits = false;
+              break;
+            }
+          }
+
+          if (fits) {
+            for (let i = 0; i < len; i++) {
+              const nx = startX + dir.dx * i;
+              const ny = startY + dir.dy * i;
+              grid[nx][ny] = word[i];
+            }
+            placedWords.push({ word, x: startX, y: startY, dx: dir.dx, dy: dir.dy });
+            placed = true;
+          }
+        }
+      }
+
+      // Заполнить оставшиеся ячейки случайными буквами
+      for (let i = 0; i < rows; i++) {
+        for (let j = 0; j < cols; j++) {
+          if (!grid[i][j]) {
+            grid[i][j] = 'АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ'[Math.floor(Math.random() * 33)];
+          }
+        }
+      }
+    }
+
+    function renderGrid() {
+      const gridEl = document.getElementById('grid');
+      gridEl.innerHTML = '';
+      for (let i = 0; i < rows; i++) {
+        for (let j = 0; j < cols; j++) {
+          const cell = document.createElement('div');
+          cell.className = 'cell';
+          cell.textContent = grid[i][j];
+          cell.dataset.row = i;
+          cell.dataset.col = j;
+          gridEl.appendChild(cell);
+        }
+      }
+    }
+
+    function renderWords() {
+      const wordList = document.getElementById('wordList');
+      wordList.innerHTML = '';
+      for (const w of words) {
+        const el = document.createElement('div');
+        el.className = 'word-item';
+        el.textContent = w;
+        wordList.appendChild(el);
+      }
+    }
+
+    let selection = [];
+
+    function clearHighlights() {
+      document.querySelectorAll('.cell').forEach(cell => {
+        cell.classList.remove('highlight', 'error');
+      });
+    }
+
+    function handleClick(e) {
+      const cell = e.target.closest('.cell');
+      if (!cell) return;
+
+      const row = +cell.dataset.row;
+      const col = +cell.dataset.col;
+
+      selection.push({ row, col });
+      cell.classList.add('highlight');
+
+      if (selection.length > 1) {
+        const word = selection.map(s => grid[s.row][s.col]).join('');
+        const reversed = word.split('').reverse().join('');
+        const matched = words.find(w => w === word || w === reversed);
+
+        if (matched) {
+          selection.forEach(s => {
+            const c = document.querySelector(`.cell[data-row="${s.row}"][data-col="${s.col}"]`);
+            c.classList.remove('highlight');
+            c.classList.add('correct');
+          });
+          document.querySelectorAll('.word-item').forEach(el => {
+            if (el.textContent === matched) el.classList.add('found');
+          });
+          document.getElementById('clickSound').play();
+        } else {
+          selection.forEach(s => {
+            const c = document.querySelector(`.cell[data-row="${s.row}"][data-col="${s.col}"]`);
+            c.classList.add('error');
+          });
+          document.getElementById('errorSound').play();
+        }
+
+        setTimeout(() => {
+          clearHighlights();
+          selection = [];
+        }, 800);
+      }
+    }
+
+    function initGame() {
+      initGrid();
+      placeWords();
+      renderGrid();
+      renderWords();
+      document.getElementById('grid').addEventListener('click', handleClick);
+    }
+
+    initGame();
+  </script>
+</body>
+</html>
