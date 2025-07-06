@@ -3,19 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <title>Wordsearch by Nika Shum</title>
-  <!-- Подключаем все нужные шрифты -->
   <link href="https://fonts.googleapis.com/css2?family=Roboto&family=Comic+Neue&family=Orbitron&family=Baloo+2&family=Comfortaa&family=Ruslan+Display&family=Roboto+Slab&family=Michroma&family=Nunito&family=Fredoka&family=M+PLUS+Rounded+1c&family=Open+Sans&family=Merriweather&family=Noto+Sans+SC&family=ZCOOL+KuaiLe&family=Ma+Shan+Zheng&family=Noto+Sans+JP&family=Yomogi&family=Nico+Moji&family=DotGothic16&display=swap" rel="stylesheet">
-
   <style>
     :root {
       --main-color: #00ffff;
       --font-family: 'Orbitron', sans-serif;
-      --cell-bg: rgba(0, 0, 0, 0.5);
+      --cell-bg: radial-gradient(circle, rgba(0,255,255,0.7) 0%, rgba(0,128,128,0.7) 100%);
       --border-color: #00ffff;
       --text-color: #00ffff;
       --glow-color: #00ffff;
     }
-
     html, body {
       margin: 0;
       padding: 0;
@@ -28,20 +25,18 @@
       justify-content: center;
       align-items: center;
     }
-
     #gameWrapper {
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       gap: 12px;
+      position: relative;
     }
-
     #grid {
       display: grid;
       gap: 6px;
     }
-
     .cell {
       width: 42px;
       height: 42px;
@@ -58,15 +53,20 @@
       user-select: none;
       transition: 0.2s;
     }
-
+    .cell.selected {
+      background: rgba(255,255,255,0.2);
+      box-shadow: inset 0 0 10px var(--glow-color);
+    }
+    .cell.found {
+      background: rgba(56, 255, 142, 0.4);
+      color: #38ff8e;
+    }
     .cell.glow {
       box-shadow: 0 0 12px var(--glow-color), inset 0 0 8px var(--glow-color);
     }
-
     .cell.rainbow {
       animation: rainbowGlow 2.5s linear infinite;
     }
-
     @keyframes rainbowGlow {
       0%   { box-shadow: 0 0 12px #ff0088; color: #ff0088; }
       25%  { box-shadow: 0 0 12px #00ffff; color: #00ffff; }
@@ -74,7 +74,6 @@
       75%  { box-shadow: 0 0 12px #ffaa00; color: #ffaa00; }
       100% { box-shadow: 0 0 12px #ff0088; color: #ff0088; }
     }
-
     #wordList {
       display: flex;
       flex-wrap: wrap;
@@ -84,14 +83,28 @@
       font-size: 18px;
       font-family: var(--font-family);
       color: var(--text-color);
+      background: var(--cell-bg);
+      padding: 10px;
+      border-radius: 12px;
+      border: 2px solid var(--border-color);
     }
-
+    #wordList span {
+      background: var(--cell-bg);
+      border: 2px solid var(--border-color);
+      border-radius: 10px;
+      padding: 6px 12px;
+      font-family: var(--font-family);
+      font-size: 18px;
+      font-weight: bold;
+      color: var(--text-color);
+      user-select: none;
+      transition: 0.2s;
+    }
     #wordList span.found {
       text-decoration: line-through;
       color: #38ff8e;
+      background: rgba(0, 0, 0, 0.3);
     }
-
-    /* Варианты размещения списка */
     .wordlist-top { flex-direction: column-reverse; }
     .wordlist-bottom { flex-direction: column; }
     .wordlist-left { flex-direction: row-reverse; align-items: flex-start; }
@@ -104,44 +117,166 @@
     <div id="grid"></div>
     <div id="wordList"></div>
   </div>
-
   <script>
-    const wordList = document.getElementById("wordList");
-    const gameWrapper = document.getElementById("gameWrapper");
-
-    // Пример: установка позиции через URL ?wordlist=top
     const urlParams = new URLSearchParams(window.location.search);
-    const wordlistPosition = urlParams.get("wordlist") || "bottom";
-    gameWrapper.classList.remove("wordlist-top", "wordlist-bottom", "wordlist-left", "wordlist-right", "wordlist-hidden");
-    gameWrapper.classList.add("wordlist-" + wordlistPosition);
+    const rawWords = urlParams.get("words")?.split(",").map(w => w.trim().toUpperCase()) || ["HELLO", "WORLD"];
+    const gridSize = Math.min(Math.max(parseInt(urlParams.get("size")) || 10, 6), 12); // ограничение от 6 до 12
+    const level = urlParams.get("level") || "medium"; // easy, medium, hard
+    const font = urlParams.get("font") || "'Orbitron', sans-serif";
 
-    // Используем массив реально вставленных слов, если он есть
-    const usedWords = window.insertedWords || words;
+    document.documentElement.style.setProperty('--font-family', font);
 
-    usedWords.forEach(word => {
-      const span = document.createElement("span");
-      span.textContent = word.toUpperCase();
-      span.dataset.word = word.toUpperCase();
-      wordList.appendChild(span);
+    const directionsByLevel = {
+      easy: [[0,1], [1,0]],
+      medium: [[0,1], [1,0], [1,1], [-1,1]],
+      hard: [[0,1], [1,0], [-1,0], [0,-1], [1,1], [-1,1], [-1,-1], [1,-1]]
+    };
+
+    const directions = directionsByLevel[level];
+    const grid = Array.from({length: gridSize}, () => Array(gridSize).fill(""));
+
+    function fits(word, x, y, dx, dy) {
+      for (let i = 0; i < word.length; i++) {
+        const nx = x + dx * i;
+        const ny = y + dy * i;
+        if (nx < 0 || ny < 0 || nx >= gridSize || ny >= gridSize) return false;
+        if (grid[ny][nx] !== "" && grid[ny][nx] !== word[i]) return false;
+      }
+      return true;
+    }
+
+    function place(word) {
+      for (let tries = 0; tries < 200; tries++) {
+        const [dx, dy] = directions[Math.floor(Math.random() * directions.length)];
+        const x = Math.floor(Math.random() * gridSize);
+        const y = Math.floor(Math.random() * gridSize);
+        if (fits(word, x, y, dx, dy)) {
+          for (let i = 0; i < word.length; i++) {
+            grid[y + dy * i][x + dx * i] = word[i];
+          }
+          return true;
+        }
+      }
+      return false;
+    }
+
+    const insertedWords = [];
+    rawWords.forEach(word => {
+      if (word.length <= gridSize && place(word)) {
+        insertedWords.push(word);
+      }
     });
 
-    function markWordFound(word) {
-      const el = document.querySelector(`#wordList span[data-word="${word}"]`);
-      if (el) el.classList.add("found");
+    window.insertedWords = insertedWords;
+
+    for (let y = 0; y < gridSize; y++) {
+      for (let x = 0; x < gridSize; x++) {
+        if (!grid[y][x]) {
+          grid[y][x] = String.fromCharCode(65 + Math.floor(Math.random() * 26));
+        }
+      }
     }
 
-    // Вызов markWordFound(normalizedWord) в if (matches && isDirectionOk)
-    if (matches && isDirectionOk) {
-      selectedCells.forEach(cell => {
-        cell.classList.add("glow");
-        cell.style.background = "#38ff8e";
-        cell.style.color = "#000";
-      });
-      markWordFound(normalizedWord);
-      foundWords.push(normalizedWord);
-      selectedCells = [];
-      [... остальной код ...]
+    const gridEl = document.getElementById("grid");
+    gridEl.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
+    gridEl.innerHTML = "";
+
+    for (let y = 0; y < gridSize; y++) {
+      for (let x = 0; x < gridSize; x++) {
+        const cell = document.createElement("div");
+        cell.className = "cell";
+        cell.dataset.x = x;
+        cell.dataset.y = y;
+        cell.textContent = grid[y][x];
+        gridEl.appendChild(cell);
+      }
     }
+
+    const wordListEl = document.getElementById("wordList");
+    insertedWords.forEach(word => {
+      const el = document.createElement("span");
+      el.textContent = word;
+      el.dataset.word = word;
+      wordListEl.appendChild(el);
+    });
+  </script>
+  <script>
+    const selected = [];
+    const found = new Set();
+    const clickSound = new Audio("https://nikashum93.github.io/wordsearch1/click.mp3");
+    const errorSound = new Audio("https://nikashum93.github.io/wordsearch1/error.mp3");
+    const winSound = new Audio("https://nikashum93.github.io/wordsearch1/win.mp3");
+
+    function playSound(sound) {
+      sound.currentTime = 0;
+      sound.play().catch(() => {});
+    }
+
+    function getWordFromSelection() {
+      return selected.map(el => el.textContent).join("");
+    }
+
+    function clearSelection(error = false) {
+      selected.forEach(el => {
+        el.classList.remove("selected");
+        if (error) el.style.background = "rgba(255,0,0,0.4)";
+        setTimeout(() => el.style.background = "", 300);
+      });
+      selected.length = 0;
+    }
+
+    function checkWord() {
+      const word = getWordFromSelection();
+      const reversed = word.split("").reverse().join("");
+      const match = insertedWords.find(w => w === word || w === reversed);
+
+      if (match && !found.has(match)) {
+        selected.forEach(cell => {
+          cell.classList.add("found");
+        });
+        document.querySelector(`#wordList span[data-word="${match}"]`)?.classList.add("found");
+        found.add(match);
+        if (found.size === insertedWords.length) {
+          winSound.play();
+          Array.from(document.querySelectorAll(".cell")).forEach(cell => {
+            cell.classList.add("rainbow");
+          });
+        } else {
+          playSound(clickSound);
+        }
+        selected.length = 0;
+      } else {
+        playSound(errorSound);
+        clearSelection(true);
+      }
+    }
+
+    document.querySelectorAll(".cell").forEach(cell => {
+      cell.addEventListener("click", () => {
+        if (cell.classList.contains("found")) return;
+        if (selected.includes(cell)) return;
+
+        selected.push(cell);
+        cell.classList.add("selected");
+
+        if (selected.length > 1) {
+          const dx = selected[1].dataset.x - selected[0].dataset.x;
+          const dy = selected[1].dataset.y - selected[0].dataset.y;
+          for (let i = 2; i < selected.length; i++) {
+            const cx = selected[i].dataset.x - selected[i - 1].dataset.x;
+            const cy = selected[i].dataset.y - selected[i - 1].dataset.y;
+            if (cx != dx || cy != dy) {
+              clearSelection(true);
+              return;
+            }
+          }
+        }
+
+        if (selected.length >= 2) {
+          checkWord();
+        }
+      });
+    });
   </script>
 </body>
 </html>
