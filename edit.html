@@ -61,8 +61,17 @@
   <label>Фраза победы:</label>
   <input type="text" id="winText" value="Ты нашёл все слова!">
 
-  <label>Цвет темы (hex):</label>
-  <input type="color" id="color" value="#00ffff">
+  <label>Цвет фона ячеек (градиент):</label>
+  <input type="color" id="bgColor" value="#00ffff">
+
+  <label>Цвет рамки:</label>
+  <input type="color" id="borderColor" value="#00ffff">
+
+  <label>Цвет текста:</label>
+  <input type="color" id="textColor" value="#00ffff">
+
+  <label>Цвет свечения:</label>
+  <input type="color" id="glowColor" value="#00ffff">
 
   <label>Шрифт:</label>
   <select id="font">
@@ -78,11 +87,30 @@
     <option value="ZCOOL KuaiLe">ZCOOL KuaiLe</option>
     <option value="Yomogi">Yomogi</option>
   </select>
-  <label>Тема оформления:</label>
+
+  <label>Тема:</label>
   <select id="theme">
     <option value="default">Обычная</option>
     <option value="rainbow">Радужная</option>
   </select>
+
+  <label>Уровень сложности:</label>
+  <select id="level">
+    <option value="easy">Лёгкий (→ ↓)</option>
+    <option value="medium" selected>Средний (→ ↓ ↘ ↙)</option>
+    <option value="hard">Сложный (все 8 направлений)</option>
+  </select>
+
+  <label>Положение списка слов:</label>
+  <select id="wordListPosition">
+    <option value="wordlist-top">Сверху</option>
+    <option value="wordlist-bottom" selected>Снизу</option>
+    <option value="wordlist-left">Слева</option>
+    <option value="wordlist-right">Справа</option>
+  </select>
+
+  <label><input type="checkbox" id="neon" checked> Неоновое свечение</label>
+  <label><input type="checkbox" id="sparkles"> Блёстки при клике</label>
 
   <button onclick="generateCode()">Сгенерировать HTML</button>
 
@@ -92,40 +120,313 @@
   <div id="previewContainer">
     <iframe id="preview"></iframe>
   </div>
-
   <script>
     async function generateCode() {
       const words = document.getElementById("words").value.trim();
       const size = document.getElementById("size").value;
       const winText = document.getElementById("winText").value.trim();
-      const color = document.getElementById("color").value;
+      const bgColor = document.getElementById("bgColor").value;
+      const borderColor = document.getElementById("borderColor").value;
+      const textColor = document.getElementById("textColor").value;
+      const glowColor = document.getElementById("glowColor").value;
       const font = document.getElementById("font").value;
       const theme = document.getElementById("theme").value;
+      const level = document.getElementById("level").value;
+      const wordListPosition = document.getElementById("wordListPosition").value;
+      const neon = document.getElementById("neon").checked;
+      const sparkles = document.getElementById("sparkles").checked;
 
-      const templateUrl = "main.html"; // Загружаем шаблон из main.html
-      const response = await fetch(templateUrl);
-      let template = await response.text();
-      // Заменяем параметры в шаблоне
-      template = template
-        .replace(/__WORDS__/, JSON.stringify(words.split(',').map(w => w.trim())))
-        .replace(/__SIZE__/, size)
-        .replace(/__WINTEXT__/, JSON.stringify(winText))
-        .replace(/__COLOR__/, color)
-        .replace(/__FONT__/, `'${font}', sans-serif`)
-        .replace(/__THEME__/, theme);
-
-      // Показываем сгенерированный код
-      document.getElementById("result").value = template;
-
-      // Предпросмотр
-      const preview = document.getElementById("preview");
-      const blob = new Blob([template], { type: "text/html" });
-      preview.src = URL.createObjectURL(blob);
+      const template = `
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Wordsearch Game</title>
+  <link href="https://fonts.googleapis.com/css2?family=${font.replace(/ /g, '+')}&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --main-color: ${bgColor};
+      --font-family: '${font}', sans-serif;
+      --cell-bg: radial-gradient(circle, ${bgColor}cc 0%, #008080b3 100%);
+      --border-color: ${borderColor};
+      --text-color: ${textColor};
+      --glow-color: ${glowColor};
     }
-  </script>
 
-  <footer style="margin-top: 2rem; opacity: 0.6; font-size: 0.8rem;">
-    (c) Корпорация Геймификации Будущего, 2025
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100vw;
+      height: 100vh;
+      background: transparent;
+      font-family: var(--font-family);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #gameWrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      position: relative;
+    }
+
+    #grid {
+      display: grid;
+      gap: 6px;
+    }
+
+    .cell {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      background: var(--cell-bg);
+      border: 2px solid var(--border-color);
+      color: var(--text-color);
+      font-family: var(--font-family);
+      font-weight: bold;
+      font-size: 22px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      user-select: none;
+      transition: 0.2s;
+    }
+
+    .cell.selected {
+      background: rgba(255,255,255,0.2);
+      ${neon ? 'box-shadow: inset 0 0 10px var(--glow-color);' : ''}
+    }
+
+    .cell.found {
+      background: rgba(56, 255, 142, 0.4);
+      color: #38ff8e;
+    }
+
+    .cell.glow {
+      box-shadow: 0 0 12px var(--glow-color), inset 0 0 8px var(--glow-color);
+    }
+
+    .cell.rainbow {
+      animation: rainbowGlow 2.5s linear infinite;
+    }
+
+    @keyframes rainbowGlow {
+      0%   { box-shadow: 0 0 12px #ff0088; color: #ff0088; }
+      25%  { box-shadow: 0 0 12px #00ffff; color: #00ffff; }
+      50%  { box-shadow: 0 0 12px #00ff55; color: #00ff55; }
+      75%  { box-shadow: 0 0 12px #ffaa00; color: #ffaa00; }
+      100% { box-shadow: 0 0 12px #ff0088; color: #ff0088; }
+    }
+
+    #wordList {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      max-width: 90vw;
+      gap: 12px;
+      font-size: 18px;
+      font-family: var(--font-family);
+      color: var(--text-color);
+      background: var(--cell-bg);
+      padding: 10px;
+      border-radius: 12px;
+      border: 2px solid var(--border-color);
+    }
+
+    #wordList span {
+      background: var(--cell-bg);
+      border: 2px solid var(--border-color);
+      border-radius: 10px;
+      padding: 6px 12px;
+      font-family: var(--font-family);
+      font-size: 18px;
+      font-weight: bold;
+      color: var(--text-color);
+      user-select: none;
+      transition: 0.2s;
+    }
+
+    #wordList span.found {
+      text-decoration: line-through;
+      color: #38ff8e;
+      background: rgba(0, 0, 0, 0.3);
+    }
+
+    .wordlist-top { flex-direction: column-reverse; }
+    .wordlist-bottom { flex-direction: column; }
+    .wordlist-left { flex-direction: row-reverse; align-items: flex-start; }
+    .wordlist-right { flex-direction: row; align-items: flex-start; }
+    .wordlist-hidden #wordList { display: none; }
+  </style>
+</head>
+<body>
+  <div id="gameWrapper" class="${wordListPosition}">
+    <div id="grid"></div>
+    <div id="wordList"></div>
+  </div>
+  <script>
+    const words = ${JSON.stringify(words.split(',').map(w => w.trim().toUpperCase()))};
+    const gridSize = ${size};
+    const level = "${level}";
+    const winText = ${JSON.stringify(winText)};
+    const font = "${font}";
+    const directionsByLevel = {
+      easy: [[0,1], [1,0]],
+      medium: [[0,1], [1,0], [1,1], [-1,1]],
+      hard: [[0,1], [1,0], [-1,0], [0,-1], [1,1], [-1,1], [-1,-1], [1,-1]]
+    };
+    const directions = directionsByLevel[level];
+    const grid = Array.from({length: gridSize}, () => Array(gridSize).fill(""));
+
+    function fits(word, x, y, dx, dy) {
+      for (let i = 0; i < word.length; i++) {
+        const nx = x + dx * i;
+        const ny = y + dy * i;
+        if (nx < 0 || ny < 0 || nx >= gridSize || ny >= gridSize) return false;
+        if (grid[ny][nx] !== "" && grid[ny][nx] !== word[i]) return false;
+      }
+      return true;
+    }
+
+    function place(word) {
+      for (let tries = 0; tries < 200; tries++) {
+        const [dx, dy] = directions[Math.floor(Math.random() * directions.length)];
+        const x = Math.floor(Math.random() * gridSize);
+        const y = Math.floor(Math.random() * gridSize);
+        if (fits(word, x, y, dx, dy)) {
+          for (let i = 0; i < word.length; i++) {
+            grid[y + dy * i][x + dx * i] = word[i];
+          }
+          return true;
+        }
+      }
+      return false;
+    }
+
+    const insertedWords = [];
+    words.forEach(word => {
+      if (word.length <= gridSize && place(word)) {
+        insertedWords.push(word);
+      }
+    });
+
+    window.insertedWords = insertedWords;
+
+    for (let y = 0; y < gridSize; y++) {
+      for (let x = 0; x < gridSize; x++) {
+        if (!grid[y][x]) {
+          grid[y][x] = String.fromCharCode(1040 + Math.floor(Math.random() * 32)); // кириллица
+        }
+      }
+    }
+
+    const gridEl = document.getElementById("grid");
+    gridEl.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
+    gridEl.innerHTML = "";
+
+    for (let y = 0; y < gridSize; y++) {
+      for (let x = 0; x < gridSize; x++) {
+        const cell = document.createElement("div");
+        cell.className = "cell";
+        cell.dataset.x = x;
+        cell.dataset.y = y;
+        cell.textContent = grid[y][x];
+        gridEl.appendChild(cell);
+      }
+    }
+
+    const wordListEl = document.getElementById("wordList");
+    insertedWords.forEach(word => {
+      const el = document.createElement("span");
+      el.textContent = word;
+      el.dataset.word = word;
+      wordListEl.appendChild(el);
+    });
+  </script>
+  <script>
+    const selected = [];
+    const found = new Set();
+    const clickSound = new Audio("https://nikashum93.github.io/wordsearch1/click.mp3");
+    const errorSound = new Audio("https://nikashum93.github.io/wordsearch1/error.mp3");
+    const winSound = new Audio("https://nikashum93.github.io/wordsearch1/win.mp3");
+
+    function playSound(sound) {
+      sound.currentTime = 0;
+      sound.play().catch(() => {});
+    }
+
+    function getWordFromSelection() {
+      return selected.map(el => el.textContent).join("");
+    }
+
+    function clearSelection(error = false) {
+      selected.forEach(el => {
+        el.classList.remove("selected");
+        if (error) el.style.background = "rgba(255,0,0,0.4)";
+        setTimeout(() => el.style.background = "", 300);
+      });
+      selected.length = 0;
+    }
+
+    function checkWord() {
+      const word = getWordFromSelection();
+      const reversed = word.split("").reverse().join("");
+      const match = insertedWords.find(w => w === word || w === reversed);
+
+      if (match && !found.has(match)) {
+        selected.forEach(cell => cell.classList.add("found"));
+        document.querySelector(`#wordList span[data-word="${match}"]`)?.classList.add("found");
+        found.add(match);
+        if (found.size === insertedWords.length) {
+          winSound.play();
+          Array.from(document.querySelectorAll(".cell")).forEach(cell => {
+            cell.classList.add("rainbow");
+          });
+          alert(winText);
+        } else {
+          playSound(clickSound);
+        }
+        selected.length = 0;
+      } else {
+        playSound(errorSound);
+        clearSelection(true);
+      }
+    }
+
+    document.querySelectorAll(".cell").forEach(cell => {
+      cell.addEventListener("click", () => {
+        if (cell.classList.contains("found")) return;
+        if (selected.includes(cell)) return;
+
+        selected.push(cell);
+        cell.classList.add("selected");
+
+        if (selected.length > 1) {
+          const dx = selected[1].dataset.x - selected[0].dataset.x;
+          const dy = selected[1].dataset.y - selected[0].dataset.y;
+          for (let i = 2; i < selected.length; i++) {
+            const cx = selected[i].dataset.x - selected[i - 1].dataset.x;
+            const cy = selected[i].dataset.y - selected[i - 1].dataset.y;
+            if (cx != dx || cy != dy) {
+              clearSelection(true);
+              return;
+            }
+          }
+        }
+
+        if (selected.length >= 2) {
+          checkWord();
+        }
+      });
+    });
+  </script>
+  <footer style="margin-top: 2rem; font-size: 0.8rem; opacity: 0.5; text-align: center;">
+    &copy; Корпорация Геймификации Будущего, 2025
   </footer>
 </body>
 </html>
