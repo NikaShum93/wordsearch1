@@ -2,196 +2,244 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <title>Редактор Wordsearch by Nika Shum</title>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&family=Comic+Neue:wght@700&family=Press+Start+2P&family=Cinzel:wght@700&family=Luckiest+Guy&family=Chewy&family=Fredoka&family=Noto+Sans+JP&family=Noto+Sans+SC&display=swap" rel="stylesheet" />
+  <title>Редактор Wordsearch</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&family=VT323&display=swap" rel="stylesheet">
   <style>
     body {
-      font-family: 'Comic Neue', sans-serif;
-      background: #0b0b0f;
-      color: white;
-      margin: 0;
-      padding: 20px;
-      display: flex;
-      gap: 30px;
+      font-family: 'Nunito', sans-serif;
+      background: #f0f0f0;
+      margin: 40px auto;
+      max-width: 900px;
+      color: #333;
     }
-    #editor {
-      flex: 1;
-      max-width: 500px;
+    h1 {
+      text-align: center;
+      font-size: 28px;
     }
     label {
-      display: block;
-      margin-top: 15px;
       font-weight: bold;
     }
-    input[type="text"], input[type="color"], select, input[type="number"] {
+    textarea, select, input {
       width: 100%;
-      padding: 8px;
-      margin-top: 5px;
-      border-radius: 6px;
-      border: none;
+      margin-bottom: 20px;
+      padding: 10px;
       font-size: 16px;
     }
-    #preview {
-      flex: 1;
-      min-height: 500px;
-      border: 3px solid #00ffff;
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 0 20px #00ffff;
-    }
-    iframe {
-      width: 100%;
-      height: 100%;
+    button {
+      background: #4CAF50;
+      color: white;
       border: none;
+      padding: 15px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      border-radius: 8px;
     }
-    textarea {
-      width: 100%;
-      height: 100px;
-      margin-top: 15px;
-      font-size: 14px;
-    }
-    .logo {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 22px;
-      color: #00ffff;
-      margin-bottom: 20px;
+    button:hover {
+      background: #45a049;
     }
   </style>
 </head>
 <body>
-  <div id="editor">
-    <div class="logo">Корпорация Геймификации Будущего</div>
+  <h1>Редактор Wordsearch</h1>
 
-    <label>Слова (через запятую):</label>
-    <input type="text" id="words" value="МАМА,ПАПА,СЫР" />
+  <label>Слова через запятую:</label>
+  <textarea id="words">КОШКА, СОБАКА, ПОГОДАИЗМЕНЧИВА</textarea>
 
-    <label>Финальный текст:</label>
-    <input type="text" id="winText" value="Все слова найдены!" />
+  <label>Язык (ру, en, fr, es, ja, zh, de):</label>
+  <select id="lang">
+    <option value="ru">Русский</option>
+    <option value="en">English</option>
+    <option value="fr">Français</option>
+    <option value="es">Español</option>
+    <option value="ja">日本語</option>
+    <option value="zh">中文</option>
+    <option value="de">Deutsch</option>
+  </select>
 
-    <label>Язык:</label>
-    <select id="lang">
-      <option value="ru">Русский</option>
-      <option value="en">English</option>
-      <option value="de">Deutsch</option>
-      <option value="fr">Français</option>
-      <option value="es">Español</option>
-      <option value="it">Italiano</option>
-      <option value="zh">中文</option>
-      <option value="ja">日本語</option>
-    </select>
+  <label>Тема оформления:</label>
+  <select id="theme">
+    <option value="light">Светлая</option>
+    <option value="magic">Магия</option>
+    <option value="rainbow">Радужная</option>
+  </select>
 
-    <label>Количество клеток (ширина x высота):</label>
-    <input type="number" id="cols" value="10" min="5" max="20" placeholder="Столбцы" />
-    <input type="number" id="rows" value="10" min="5" max="20" placeholder="Строки" />
+  <label>Финальный текст:</label>
+  <input id="winText" value="Молодец! Все слова найдены!" />
 
-    <label>Тема:</label>
-    <select id="theme">
-      <option value="light">Светлая</option>
-      <option value="dark">Тёмная</option>
-      <option value="rainbow">Радужная</option>
-    </select>
-
-    <label>Шрифт:</label>
-    <select id="font"></select>
-
-    <label>Цвет свечения (glow):</label>
-    <input type="color" id="glowColor" value="#00ffff" />
-
-    <label>Цвет фона букв (cellBg):</label>
-    <input type="color" id="cellBg" value="#ffffff" />
-
-    <label>Цвет букв (textColor):</label>
-    <input type="color" id="textColor" value="#000000" />
-
-    <label>Включить блёстки и вспышку:</label>
-    <select id="glossy">
-      <option value="1">Да</option>
-      <option value="0">Нет</option>
-    </select>
-
-    <label>Звуковые эффекты:</label>
-    <select id="sound">
-      <option value="1">Включены</option>
-      <option value="0">Отключены</option>
-    </select>
-
-    <label>Код вставки (iframe):</label>
-    <textarea readonly id="code"></textarea>
-  </div>
-
-  <div id="preview">
-    <iframe id="iframe" src=""></iframe>
-  </div>
+  <button onclick="generateGame()">Скачать HTML-игру</button>
 
   <script>
-    const fontSelect = document.getElementById('font');
-    const langSelect = document.getElementById('lang');
+    function getSoundScript() {
+      return `
+        function loadSound(name) {
+          return fetch(name, { method: 'HEAD' })
+            .then(res => res.ok ? name : './' + name)
+            .catch(() => './' + name);
+        }
+        async function playSound(name) {
+          const src = await loadSound(name);
+          const audio = new Audio(src);
+          audio.play();
+        }
+      `;
+    }
 
-    const fontOptions = {
-      ru: ["Comic Neue", "Fredoka", "Cinzel"],
-      en: ["Comic Neue", "Orbitron", "Luckiest Guy", "Press Start 2P", "Cinzel", "Chewy", "Fredoka"],
-      de: ["Comic Neue", "Fredoka", "Cinzel"],
-      fr: ["Comic Neue", "Fredoka", "Cinzel"],
-      es: ["Comic Neue", "Fredoka", "Cinzel"],
-      it: ["Comic Neue", "Fredoka", "Cinzel"],
-      zh: ["Noto Sans SC"],
-      ja: ["Noto Sans JP"]
-    };
+    function generateGame() {
+      const words = document.getElementById("words").value.toUpperCase().split(',').map(w => w.trim()).filter(Boolean);
+      const lang = document.getElementById("lang").value;
+      const theme = document.getElementById("theme").value;
+      const winText = document.getElementById("winText").value;
 
-    const updateFontOptions = () => {
-      const lang = langSelect.value;
-      const fonts = fontOptions[lang] || fontOptions["en"];
-      fontSelect.innerHTML = "";
-      fonts.forEach(font => {
-        const option = document.createElement("option");
-        option.value = font;
-        option.textContent = font;
-        fontSelect.appendChild(option);
-      });
-      update();
-    };
+      const longest = Math.max(...words.map(w => w.length));
+      const gridSize = Math.max(10, longest + 2);
 
-    const update = () => {
-      const words = document.getElementById('words').value.trim();
-      const winText = encodeURIComponent(document.getElementById('winText').value.trim());
-      const theme = document.getElementById('theme').value;
-      const font = encodeURIComponent(document.getElementById('font').value);
-      const glowColor = document.getElementById('glowColor').value;
-      const cellBg = document.getElementById('cellBg').value;
-      const textColor = document.getElementById('textColor').value;
-      const glossy = document.getElementById('glossy').value;
-      const sound = document.getElementById('sound').value;
-      const lang = document.getElementById('lang').value;
-      const rows = document.getElementById('rows').value;
-      const cols = document.getElementById('cols').value;
+      const alphabetMap = {
+        ru: 'АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ',
+        en: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+        fr: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+        es: 'ABCDEFGHIJKLMNÑOPQRSTUVWXYZ',
+        ja: 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモラリルレロワヲン',
+        zh: '的一是在不了有和人这中大为上个国我以要他时来用们生到作地于出就分对成会可主发年动同工也能下过子说产种面而方后多定行学法所民得经十三之进着等部度家电力里如水化高自二理起小物现实加量都两体制机当使点从业本去把性好应开它合还因由其些然前外天政四日那社义事平形相全表间样与关各重新线内数正心反你明看原又么利比或但质气第向道命此变条只没结解问意建月公无系军很情者最立代想已通并提直题党程展五果料象员革位入常文总次品式活设及管特件长求老头基资边流路级少图山统接知较将组见计别她手角期根论运农指几九区强放决西被干做必战先回则任取据处队南给色光门即保治北造百规热领七海口东导器压志世金增争济阶油思术极交受联什认六共权收证改清己美再采转更单风节解'.
 
-      const params = new URLSearchParams({
-        words,
-        winText,
-        theme,
-        font,
-        glowColor,
-        cellBg,
-        textColor,
-        glossy,
-        sound,
-        lang,
-        rows,
-        cols
-      });
+      const letters = alphabetMap[lang] || alphabetMap['ru'];
 
-      const fullURL = `https://nikashum93.github.io/wordsearch1/main.html?${params.toString()}`;
-      document.getElementById('iframe').src = fullURL;
-      document.getElementById('code').value = `<iframe src="${fullURL}" width="800" height="600" style="border:none;"></iframe>`;
-    };
+      const html = `
+<!DOCTYPE html>
+<html lang="${lang}">
+<head>
+<meta charset="UTF-8" />
+<title>Wordsearch Game</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<style>
+  body { font-family: sans-serif; background: #f0f0f0; margin: 20px; }
+  #grid { display: grid; grid-template-columns: repeat(${gridSize}, 1fr); gap: 4px; }
+  .cell {
+    width: 36px; height: 36px;
+    background: white;
+    text-align: center; line-height: 36px;
+    font-size: 18px; font-weight: bold;
+    border-radius: 6px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .cell.selected { background: #ffc; }
+  .cell.found {
+    background: linear-gradient(to right, red, orange, yellow, green, blue, indigo, violet);
+    color: white;
+    animation: rainbow 1s infinite alternate;
+  }
+  @keyframes rainbow {
+    0% { filter: hue-rotate(0deg); }
+    100% { filter: hue-rotate(360deg); }
+  }
+  #word-list { margin-top: 20px; }
+  .word { margin: 5px 0; font-weight: bold; }
+  .word.found { text-decoration: line-through; color: gray; }
+</style>
+</head>
+<body>
+<h2>${winText}</h2>
+<div id="grid"></div>
+<div id="word-list"></div>
+<script>
+${getSoundScript()}
 
-    document.querySelectorAll('input, select').forEach(el => {
-      el.addEventListener('input', update);
-    });
+const words = ${JSON.stringify(words)};
+const letters = "${letters}";
+const gridSize = ${gridSize};
+const grid = Array.from({ length: gridSize }, () => Array(gridSize).fill(''));
+const placedWords = [];
 
-    langSelect.addEventListener('change', updateFontOptions);
+function getRandomDir() {
+  const dirs = [
+    { dx: 1, dy: 0 }, { dx: 0, dy: 1 },
+    { dx: 1, dy: 1 }, { dx: -1, dy: 0 },
+    { dx: 0, dy: -1 }, { dx: -1, dy: -1 },
+    { dx: 1, dy: -1 }, { dx: -1, dy: 1 }
+  ];
+  return dirs[Math.floor(Math.random() * dirs.length)];
+}
 
-    updateFontOptions();
+function placeWords() {
+  for (const word of words) {
+    let placed = false;
+    for (let attempt = 0; attempt < 500 && !placed; attempt++) {
+      const dir = getRandomDir();
+      const x = Math.floor(Math.random() * gridSize);
+      const y = Math.floor(Math.random() * gridSize);
+      let fits = true;
+      for (let i = 0; i < word.length; i++) {
+        const nx = x + dir.dx * i;
+        const ny = y + dir.dy * i;
+        if (nx < 0 || ny < 0 || nx >= gridSize || ny >= gridSize || (grid[ny][nx] && grid[ny][nx] !== word[i])) {
+          fits = false; break;
+        }
+      }
+      if (fits) {
+        for (let i = 0; i < word.length; i++) {
+          const nx = x + dir.dx * i;
+          const ny = y + dir.dy * i;
+          grid[ny][nx] = word[i];
+        }
+        placedWords.push({ word, x, y, dx: dir.dx, dy: dir.dy });
+        placed = true;
+      }
+    }
+  }
+}
+
+function fillGrid() {
+  for (let y = 0; y < gridSize; y++) {
+    for (let x = 0; x < gridSize; x++) {
+      if (!grid[y][x]) {
+        grid[y][x] = letters[Math.floor(Math.random() * letters.length)];
+      }
+    }
+  }
+}
+
+function drawGrid() {
+  const container = document.getElementById("grid");
+  container.innerHTML = "";
+  for (let y = 0; y < gridSize; y++) {
+    for (let x = 0; x < gridSize; x++) {
+      const div = document.createElement("div");
+      div.className = "cell";
+      div.textContent = grid[y][x];
+      div.dataset.x = x;
+      div.dataset.y = y;
+      container.appendChild(div);
+    }
+  }
+}
+
+function drawWords() {
+  const list = document.getElementById("word-list");
+  list.innerHTML = "";
+  for (const word of words) {
+    const div = document.createElement("div");
+    div.className = "word";
+    div.textContent = word;
+    list.appendChild(div);
+  }
+}
+
+placeWords();
+fillGrid();
+drawGrid();
+drawWords();
+</script>
+</body>
+</html>
+`;
+
+      const blob = new Blob([html], { type: 'text/html' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'wordsearch.html';
+      link.click();
+    }
   </script>
 </body>
 </html>
