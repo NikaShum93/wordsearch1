@@ -1,193 +1,334 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Wordsearch Game</title>
-  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&family=Orbitron&family=VT323&display=swap" rel="stylesheet">
+  <meta charset="UTF-8">
+  <title>Wordsearch by Nika Shum</title>
+  <!-- Подключаем все нужные шрифты -->
+  <link href="https://fonts.googleapis.com/css2?family=Roboto&family=Comic+Neue&family=Orbitron&family=Baloo+2&family=Comfortaa&family=Ruslan+Display&family=Roboto+Slab&family=Michroma&family=Nunito&family=Fredoka&family=M+PLUS+Rounded+1c&family=Open+Sans&family=Merriweather&family=Noto+Sans+SC&family=ZCOOL+KuaiLe&family=Ma+Shan+Zheng&family=Noto+Sans+JP&family=Yomogi&family=Nico+Moji&family=DotGothic16&display=swap" rel="stylesheet">
+
   <style>
-    body {
+    :root {
+      --main-color: #00ffff;
+      --font-family: 'Orbitron', sans-serif;
+      --cell-bg: rgba(0, 0, 0, 0.5);
+      --border-color: #00ffff;
+      --text-color: #00ffff;
+      --glow-color: #00ffff;
+    }
+
+    html, body {
       margin: 0;
-      font-family: 'Nunito', sans-serif;
-      background: #f4f4f4;
+      padding: 0;
+      width: 100vw;
+      height: 100vh;
+      background: transparent;
+      font-family: var(--font-family);
       display: flex;
-      flex-direction: column;
-      align-items: center;
       justify-content: center;
+      align-items: center;
     }
-    #game-container {
-      display: flex;
-      gap: 30px;
-      margin-top: 40px;
-    }
+
     #grid {
       display: grid;
-      grid-template-columns: repeat(10, 40px);
-      grid-gap: 4px;
+      gap: 6px;
     }
+
     .cell {
-      width: 40px;
-      height: 40px;
-      background: white;
-      border-radius: 8px;
-      box-shadow: 0 0 4px rgba(0,0,255,0.3);
-      text-align: center;
-      line-height: 40px;
-      font-size: 20px;
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      background: var(--cell-bg);
+      border: 2px solid var(--border-color);
+      color: var(--text-color);
+      font-family: var(--font-family);
       font-weight: bold;
-      cursor: pointer;
-      user-select: none;
-    }
-    .cell.selected {
-      background: #ffc;
-    }
-    .cell.correct {
-      background: #90ee90;
-    }
-    .cell.incorrect {
-      background: #f99;
-    }
-    .cell.partial {
-      background: #ddd;
-    }
-    .cell.found {
-      background: linear-gradient(to right, red, orange, yellow, green, blue, indigo, violet);
-      color: white;
-      animation: rainbow 1s infinite alternate;
-    }
-    @keyframes rainbow {
-      0% { filter: hue-rotate(0deg); }
-      100% { filter: hue-rotate(360deg); }
-    }
-    #word-list {
+      font-size: 22px;
       display: flex;
-      flex-direction: column;
-      gap: 10px;
+      justify-content: center;
+      align-items: center;
+      user-select: none;
+      transition: 0.2s;
     }
-    .word {
-      padding: 5px 10px;
-      background: white;
-      border-radius: 8px;
-      font-size: 18px;
-      font-weight: bold;
-      box-shadow: 0 0 4px rgba(0,0,255,0.2);
-      transition: 0.3s;
+
+    .cell.glow {
+      box-shadow: 0 0 12px var(--glow-color), inset 0 0 8px var(--glow-color);
     }
-    .word.found {
-      text-decoration: line-through;
-      color: gray;
+
+    .cell.rainbow {
+      animation: rainbowGlow 2.5s linear infinite;
+    }
+
+    @keyframes rainbowGlow {
+      0%   { box-shadow: 0 0 12px #ff0088; color: #ff0088; }
+      25%  { box-shadow: 0 0 12px #00ffff; color: #00ffff; }
+      50%  { box-shadow: 0 0 12px #00ff55; color: #00ff55; }
+      75%  { box-shadow: 0 0 12px #ffaa00; color: #ffaa00; }
+      100% { box-shadow: 0 0 12px #ff0088; color: #ff0088; }
     }
   </style>
 </head>
 <body>
-  <h1>Поиск слов</h1>
-  <div id="game-container">
-    <div id="grid"></div>
-    <div id="word-list"></div>
-  </div>
-  <audio id="correct-sound" src="https://nikashum93.github.io/wordsearch-plugin/sounds/correct.mp3"></audio>
-  <audio id="error-sound" src="https://nikashum93.github.io/wordsearch-plugin/sounds/error.mp3"></audio>
-  <audio id="win-sound" src="https://nikashum93.github.io/wordsearch-plugin/sounds/win.mp3"></audio>
+  <div id="grid"></div>
   <script>
-    const words = ["МОЛОКО", "ПОГОДАИЗМЕНЧИВА", "МЕДВЕДЬ", "МАМА", "ПАПА", "СЫР"];
-    const rows = 10, cols = 10;
-    const grid = Array.from({ length: rows }, () => Array(cols).fill(''));
-    const placedWords = [];
+    const params = new URLSearchParams(window.location.search);
 
-    function getRandomDirection() {
-      const dirs = [
-        { dx: 1, dy: 0 }, { dx: -1, dy: 0 },
-        { dx: 0, dy: 1 }, { dx: 0, dy: -1 },
-        { dx: 1, dy: 1 }, { dx: -1, dy: -1 },
-        { dx: 1, dy: -1 }, { dx: -1, dy: 1 }
-      ];
-      return dirs[Math.floor(Math.random() * dirs.length)];
+    const gridSize = Math.max(5, Math.min(15, parseInt(params.get("gridSize")) || 10));
+    const words = (params.get("words") || "")
+      .split(",")
+      .map(w => w.trim())
+      .filter(Boolean);
+
+    const winText = decodeURIComponent(params.get("winText") || "Ты нашёл все слова!");
+    const caseType = params.get("case") || "uppercase";
+    const alphabet = params.get("alphabet") || "latin";
+    const fontStyle = params.get("fontStyle") || "classic";
+    const cellColor = params.get("cellColor") || "rgba(0,0,0,0.5)";
+    const borderColor = params.get("cellBorder") || "#00ffff";
+    const textColor = params.get("textColor") || borderColor;
+    const glowColor = params.get("glowColor") || "#00ffff";
+    const glowType = params.get("glowType") || "none";
+
+    const alphabets = {
+      latin: "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+      cyrillic: "АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ",
+      french: "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+      german: "ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÜß",
+      spanish: "ABCDEFGHIJKLMNÑOPQRSTUVWXYZ",
+      pinyin: "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+      hiragana: "あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん"
+    };
+    const fontPresets = {
+      latin: {
+        classic: "Roboto",
+        comic: "Comic Neue",
+        cute: "Baloo 2",
+        tech: "Orbitron"
+      },
+      cyrillic: {
+        classic: "Roboto Slab",
+        comic: "Ruslan Display",
+        cute: "Comfortaa",
+        tech: "Michroma"
+      },
+      french: {
+        classic: "Nunito",
+        comic: "Comic Neue",
+        cute: "Baloo 2",
+        tech: "Orbitron"
+      },
+      german: {
+        classic: "Open Sans",
+        comic: "Fredoka",
+        cute: "M PLUS Rounded 1c",
+        tech: "Orbitron"
+      },
+      spanish: {
+        classic: "Merriweather",
+        comic: "Comic Neue",
+        cute: "Baloo 2",
+        tech: "Orbitron"
+      },
+      pinyin: {
+        classic: "Noto Sans SC",
+        comic: "ZCOOL KuaiLe",
+        cute: "Ma Shan Zheng",
+        tech: "Orbitron"
+      },
+      hiragana: {
+        classic: "Noto Sans JP",
+        comic: "Yomogi",
+        cute: "Nico Moji",
+        tech: "DotGothic16"
+      }
+    };
+
+    const alphabetSet = alphabets[alphabet] || alphabets.latin;
+    const selectedFont = (fontPresets[alphabet] || fontPresets.latin)[fontStyle] || "Orbitron";
+
+    // Устанавливаем параметры в CSS
+    document.documentElement.style.setProperty("--font-family", `'${selectedFont}', sans-serif`);
+    document.documentElement.style.setProperty("--cell-bg", cellColor);
+    document.documentElement.style.setProperty("--border-color", borderColor);
+    document.documentElement.style.setProperty("--text-color", textColor);
+    document.documentElement.style.setProperty("--glow-color", glowColor);
+  const level = params.get("level") || "medium";
+  const directions = {
+    easy: [[1, 0], [0, 1]],
+    medium: [[1, 0], [0, 1], [1, 1], [-1, 1]],
+    hard: [[1, 0], [0, 1], [1, 1], [-1, 1], [1, -1], [0, -1], [-1, 0], [-1, -1]]
+  };
+
+  const gridArray = Array.from({ length: gridSize }, () =>
+    Array(gridSize).fill("")
+  );
+
+  // Размещение слов
+  for (const raw of words) {
+    const word = [...raw.toUpperCase()].filter(l => alphabetSet.includes(l));
+    if (word.length > gridSize) {
+      console.warn(`⚠️ Слово "${raw}" слишком длинное для сетки ${gridSize}x${gridSize}`);
+      continue;
     }
 
-    function placeWords() {
-      for (const word of words) {
-        let placed = false;
-        for (let attempt = 0; attempt < 1000 && !placed; attempt++) {
-          const dir = getRandomDirection();
-          const len = word.length;
-          const startX = dir.dx === 1 ? Math.floor(Math.random() * (rows - len))
-                       : dir.dx === -1 ? Math.floor(Math.random() * (rows - len)) + len - 1
-                       : Math.floor(Math.random() * rows);
-          const startY = dir.dy === 1 ? Math.floor(Math.random() * (cols - len))
-                       : dir.dy === -1 ? Math.floor(Math.random() * (cols - len)) + len - 1
-                       : Math.floor(Math.random() * cols);
-          let fits = true;
-          for (let i = 0; i < len; i++) {
-            const nx = startX + dir.dx * i;
-            const ny = startY + dir.dy * i;
-            if (nx < 0 || ny < 0 || nx >= rows || ny >= cols || (grid[nx][ny] && grid[nx][ny] !== word[i])) {
-              fits = false;
-              break;
-            }
-          }
-          if (fits) {
-            for (let i = 0; i < len; i++) {
-              const nx = startX + dir.dx * i;
-              const ny = startY + dir.dy * i;
-              grid[nx][ny] = word[i];
-            }
-            placedWords.push({ word, startX, startY, dx: dir.dx, dy: dir.dy });
-            placed = true;
-          }
+    let placed = false;
+    for (let attempt = 0; attempt < 100; attempt++) {
+      const [dx, dy] = directions[level][Math.floor(Math.random() * directions[level].length)];
+      const x = Math.floor(Math.random() * gridSize);
+      const y = Math.floor(Math.random() * gridSize);
+
+      let fits = true;
+      for (let i = 0; i < word.length; i++) {
+        const nx = x + dx * i;
+        const ny = y + dy * i;
+        if (nx < 0 || ny < 0 || nx >= gridSize || ny >= gridSize) {
+          fits = false;
+          break;
+        }
+        if (gridArray[ny][nx] && gridArray[ny][nx] !== word[i]) {
+          fits = false;
+          break;
         }
       }
-    }
 
-    function fillRandomLetters() {
-      const alphabet = "АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ";
-      for (let i = 0; i < rows; i++) {
-        for (let j = 0; j < cols; j++) {
-          if (!grid[i][j]) {
-            grid[i][j] = alphabet[Math.floor(Math.random() * alphabet.length)];
-          }
+      if (fits) {
+        for (let i = 0; i < word.length; i++) {
+          const nx = x + dx * i;
+          const ny = y + dy * i;
+          gridArray[ny][nx] = word[i];
         }
+        placed = true;
+        break;
       }
     }
 
-    function renderGrid() {
-      const gridContainer = document.getElementById("grid");
-      gridContainer.innerHTML = "";
-      for (let i = 0; i < rows; i++) {
-        for (let j = 0; j < cols; j++) {
-          const cell = document.createElement("div");
-          cell.className = "cell";
-          cell.textContent = grid[i][j];
-          cell.dataset.row = i;
-          cell.dataset.col = j;
-          gridContainer.appendChild(cell);
-        }
+    if (!placed) {
+      console.warn(`⚠️ Не удалось вставить слово: ${raw}`);
+    }
+  }
+
+  // Заполнение оставшихся клеток случайными буквами
+  for (let y = 0; y < gridSize; y++) {
+    for (let x = 0; x < gridSize; x++) {
+      if (!gridArray[y][x]) {
+        const rand = alphabetSet[Math.floor(Math.random() * alphabetSet.length)];
+        gridArray[y][x] = caseType === "lowercase" ? rand.toLowerCase() : rand.toUpperCase();
       }
     }
+  }
 
-    function renderWords() {
-      const list = document.getElementById("word-list");
-      list.innerHTML = "";
-      for (const w of words) {
-        const div = document.createElement("div");
-        div.textContent = w;
-        div.className = "word";
-        list.appendChild(div);
+  // Отрисовка грида
+  const grid = document.getElementById("grid");
+  grid.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
+
+  for (let y = 0; y < gridSize; y++) {
+    for (let x = 0; x < gridSize; x++) {
+      const div = document.createElement("div");
+      div.className = "cell";
+      div.textContent = gridArray[y][x];
+
+      if (glowType === "neon") div.classList.add("glow");
+      if (glowType === "rainbow") div.classList.add("rainbow");
+
+      grid.appendChild(div);
+    }
+  }
+  let selectedCells = [];
+  let foundWords = [];
+
+  function clearSelection(error = false) {
+    selectedCells.forEach(cell => {
+      cell.classList.remove("selected");
+      if (error) {
+        cell.style.background = "#e74c3c";
+        cell.style.color = "#fff";
+        setTimeout(() => {
+          cell.style.background = "";
+          cell.style.color = "";
+        }, 300);
+      }
+    });
+    selectedCells = [];
+  }
+
+  function getCellCoords(cell) {
+    const index = Array.from(grid.children).indexOf(cell);
+    return {
+      x: index % gridSize,
+      y: Math.floor(index / gridSize)
+    };
+  }
+
+  function checkDirection(cells) {
+    if (cells.length < 2) return false;
+    const { x: x0, y: y0 } = getCellCoords(cells[0]);
+    const { x: x1, y: y1 } = getCellCoords(cells[1]);
+    const dx = x1 - x0;
+    const dy = y1 - y0;
+    for (let i = 1; i < cells.length; i++) {
+      const { x, y } = getCellCoords(cells[i]);
+      if (x !== x0 + dx * i || y !== y0 + dy * i) return false;
+    }
+    return true;
+  }
+
+  function handleClick(e) {
+    const cell = e.target;
+    if (!cell.classList.contains("cell")) return;
+    if (selectedCells.includes(cell)) return;
+
+    cell.classList.add("selected");
+    selectedCells.push(cell);
+
+    const selectedWord = selectedCells.map(c => c.textContent).join("");
+    const normalizedWord = selectedWord.toUpperCase();
+
+    const matches = words.some(
+      word => word.toUpperCase() === normalizedWord
+    );
+
+    const isDirectionOk = checkDirection(selectedCells);
+
+    if (matches && isDirectionOk) {
+      selectedCells.forEach(cell => {
+        cell.classList.add("glow");
+        cell.style.background = "#38ff8e";
+        cell.style.color = "#000";
+      });
+      foundWords.push(normalizedWord);
+      selectedCells = [];
+
+      if (foundWords.length === words.length) {
+        setTimeout(() => {
+          const message = document.createElement("div");
+          message.textContent = winText;
+          message.style.position = "fixed";
+          message.style.top = "50%";
+          message.style.left = "50%";
+          message.style.transform = "translate(-50%, -50%)";
+          message.style.padding = "20px 30px";
+          message.style.background = "rgba(0,0,0,0.8)";
+          message.style.border = "2px solid var(--main-color)";
+          message.style.borderRadius = "16px";
+          message.style.fontSize = "24px";
+          message.style.color = "var(--main-color)";
+          message.style.fontFamily = "var(--font-family)";
+          message.style.boxShadow = "0 0 20px var(--main-color)";
+          document.body.appendChild(message);
+        }, 500);
+      }
+    } else {
+      const isMistake = !words.some(w =>
+        w.toUpperCase().startsWith(normalizedWord)
+      );
+      if (isMistake || selectedCells.length > gridSize) {
+        clearSelection(true);
       }
     }
+  }
 
-    function playSound(id) {
-      const sound = document.getElementById(id);
-      sound && sound.play();
-    }
-
-    function startGame() {
-      placeWords();
-      fillRandomLetters();
-      renderGrid();
-      renderWords();
-    }
-
-    startGame();
-  </script>
+  // Включаем обработчик
+  grid.addEventListener("click", handleClick);
+</script>
 </body>
 </html>
+
