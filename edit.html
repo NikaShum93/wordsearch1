@@ -77,8 +77,7 @@
 </head>
 <body>
   <h1>Редактор Wordsearch</h1>
-
-  <label>Слова (через запятую):</label>
+   <label>Слова (через запятую):</label>
   <input type="text" id="words" value="CAT, DOG, FISH">
   <div class="warning" id="lengthWarning">Некоторые слова не помещаются в грид. Увеличьте размер поля.</div>
 
@@ -150,22 +149,184 @@
   <button onclick="generateCode()">Сгенерировать HTML</button>
 
   <label>Готовый HTML:</label>
-  <textarea id="result" readonly rows="10" style="width: 100%"></textarea>
+  <textarea id="result" readonly rows="10" style="width: 100%" onclick="this.select()"></textarea>
 
   <div id="previewContainer">
     <iframe id="preview"></iframe>
   </div>
 
-  <footer style="margin-top: 2rem; opacity: 0.6; font-size: 0.8rem;">
-    (c) Корпорация Геймификации Будущего, 2025
-  </footer>
-
+  
   <script>
-    function setColor(hex) {
-      document.getElementById('color').value = hex;
-    }
-  </script>
+  function setColor(hex) {
+    document.getElementById('color').value = hex;
+  }
 
-  <!-- В следующем сообщении: логика generateCode() и вставка base64-звуков и блёсток -->
+   function generateCode() {
+    const wordsRaw = document.getElementById("words").value.trim();
+    const size = parseInt(document.getElementById("size").value);
+    const winText = document.getElementById("winText").value.trim();
+    const font = document.getElementById("font").value;
+    const level = document.getElementById("level").value;
+    const lang = document.getElementById("language").value;
+    const caseMode = document.getElementById("caseMode").value;
+    const wordListPosition = document.getElementById("wordListPosition").value;
+    const glow = document.getElementById("glow").checked;
+    const sparkles = document.getElementById("sparkles").checked;
+    const color = document.getElementById("color").value;
+
+    const words = wordsRaw.split(",").map(w => w.trim()).filter(Boolean);
+    const tooLong = words.find(w => w.length > size);
+
+    const warningEl = document.getElementById("lengthWarning");
+    if (tooLong) {
+      warningEl.style.display = "block";
+      warningEl.textContent = `Слово "${tooLong}" не помещается в поле. Увеличьте размер грида.`;
+      return;
+    } else {
+      warningEl.style.display = "none";
+    }
+
+    const charSets = {
+      english: "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+      russian: "АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ",
+      french: "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+      german: "ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÜẞ",
+      spanish: "ABCDEFGHIJKLMNÑOPQRSTUVWXYZ",
+      chinese: "的一是不了人我在有他这为之大来以个中上们",
+      japanese: "あいうえおかきくけこさしすせそたちつてと"
+    };
+
+    const baseAlphabet = charSets[lang] || charSets["english"];
+    const alphabet = caseMode === "upper" ? baseAlphabet.toUpperCase() : baseAlphabet;
+
+    const gameHTML = `
+<div class="wordsearch-wrapper" style="--main-color:${color};font-family:'${font}',sans-serif">
+  <div class="wordsearch-game" id="gameContainer"
+    data-words='${JSON.stringify(words)}'
+    data-size='${size}'
+    data-alphabet='${alphabet}'
+    data-win='${winText}'
+    data-level='${level}'
+    data-glow='${glow}'
+    data-sparkles='${sparkles}'
+    data-wordlist='${wordListPosition}'>
+  </div>
+</div>`;
+
+    const fullHTML = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body {
+      background: transparent;
+      margin: 0;
+      padding: 1rem;
+    }
+    .grid {
+      display: grid;
+      gap: 4px;
+    }
+    .cell {
+      border: 1px solid var(--main-color);
+      padding: 6px;
+      text-align: center;
+      cursor: pointer;
+    }
+    .wordlist {
+      margin-top: 1rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      font-size: 1rem;
+    }
+    .feedback {
+      margin-top: 1rem;
+      color: var(--main-color);
+      font-weight: bold;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  ${gameHTML}
+  <script>
+    (function(){
+      const root = document.getElementById("gameContainer");
+      const words = JSON.parse(root.dataset.words);
+      const size = parseInt(root.dataset.size);
+      const alphabet = root.dataset.alphabet;
+      const level = root.dataset.level;
+      const glow = root.dataset.glow === "true";
+      const sparkles = root.dataset.sparkles === "true";
+      const winText = root.dataset.win;
+      const wordlistPos = root.dataset.wordlist;
+
+      const grid = Array(size).fill().map(() => Array(size).fill(""));
+      const placed = [];
+
+      for (let word of words) {
+        const row = Math.floor(Math.random() * size);
+        const col = Math.floor(Math.random() * (size - word.length));
+        for (let i = 0; i < word.length; i++) {
+          grid[row][col + i] = word[i];
+        }
+        placed.push(word);
+      }
+
+      for (let y = 0; y < size; y++) {
+        for (let x = 0; x < size; x++) {
+          if (!grid[y][x]) {
+            grid[y][x] = alphabet[Math.floor(Math.random() * alphabet.length)];
+          }
+        }
+      }
+
+      root.innerHTML = \`
+        <div class="grid" style="grid-template-columns:repeat(\${size},1fr)">
+          \${grid.map(row => row.map(letter => \`<div class="cell">\${letter}</div>\`).join("")).join("")}
+        </div>
+        <div class="wordlist">
+          \${placed.map(w => \`<span>\${w}</span>\`).join("")}
+        </div>
+        <div class="feedback">\${winText}</div>
+      \`;
+
+      const cells = root.querySelectorAll(".cell");
+      let current = "";
+
+      cells.forEach(cell => {
+        cell.addEventListener("click", () => {
+          current += cell.textContent;
+          cell.style.background = "var(--main-color)";
+          cell.style.color = "black";
+
+          if (sparkles) {
+            cell.style.boxShadow = \`0 0 6px 2px var(--main-color)\`;
+          }
+
+          if (words.includes(current)) {
+            current = "";
+            const left = root.querySelectorAll(".wordlist span");
+            left.forEach(span => {
+              if (span.textContent === cell.textContent) span.style.textDecoration = "line-through";
+            });
+
+            const foundAll = [...left].every(span => span.style.textDecoration);
+            if (foundAll) {
+              root.querySelector(".feedback").style.display = "block";
+            }
+          }
+        });
+      });
+    })();
+  </script>
 </body>
-</html>
+</html>`;
+
+    document.getElementById("result").textContent = fullHTML;
+    document.getElementById("preview").src = URL.createObjectURL(new Blob([fullHTML], { type: "text/html" }));
+  }
+</script>
+
