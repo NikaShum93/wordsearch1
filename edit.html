@@ -2,8 +2,8 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>Редактор Wordsearch</title>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto&family=Comic+Neue&family=Orbitron&family=Baloo+2&family=Comfortaa&family=Michroma&family=Fredoka&family=M+PLUS+Rounded+1c&family=Ruslan+Display&family=ZCOOL+KuaiLe&family=Yomogi&display=swap" rel="stylesheet">
+  <title>Редактор Wordsearch by Nika Shum</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto&family=Comic+Neue&family=Orbitron&family=Baloo+2&family=Comfortaa&family=Michroma&family=Fredoka&family=M+PLUS+Rounded+1c&family=Ruslan+Display&family=ZCOOL+KuaiLe&family=Ma+Shan+Zheng&family=Noto+Sans+JP&family=Noto+Sans+SC&family=Yomogi&display=swap" rel="stylesheet">
   <style>
     body {
       background: #0a0a0a;
@@ -14,140 +14,316 @@
       flex-direction: column;
       align-items: center;
     }
-    input, select, textarea {
-      padding: 0.6rem;
-      margin: 0.5rem;
-      border-radius: 10px;
-      border: none;
+    h1 {
+      font-size: 2rem;
+      color: #00ffff;
+      margin-bottom: 1rem;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      width: 100%;
+      max-width: 720px;
+      margin-bottom: 1rem;
+    }
+    .form-group label {
+      margin-bottom: 0.5rem;
+      font-weight: bold;
       font-size: 1rem;
     }
-    label {
-      margin-top: 1rem;
-      display: block;
-      font-weight: bold;
-    }
-    button {
-      background: #00ffff;
-      color: black;
-      font-weight: bold;
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 0.6rem;
+      border-radius: 12px;
       border: none;
+      font-size: 1rem;
+      background: #111;
+      color: white;
+    }
+    .color-options {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+    .color-square {
+      width: 32px;
+      height: 32px;
       border-radius: 8px;
-      padding: 0.7rem 1.2rem;
-      margin-top: 1rem;
       cursor: pointer;
+      border: 2px solid white;
+    }
+    .preview-title {
+      margin-top: 2rem;
+      font-size: 1.2rem;
+      color: #00ffff;
     }
     #previewContainer {
       width: 100%;
       height: 480px;
-      margin-top: 2rem;
+      margin-top: 1rem;
       border: 2px solid #00ffff;
+      border-radius: 12px;
+      overflow: hidden;
     }
     iframe {
       width: 100%;
       height: 100%;
       border: none;
     }
+    textarea {
+      width: 100%;
+      height: 200px;
+      font-family: monospace;
+      margin-top: 1rem;
+      border-radius: 12px;
+      padding: 1rem;
+      background: #111;
+      color: white;
+      border: 2px solid #00ffff;
+    }
+    button {
+      background: #00ffff;
+      color: black;
+      font-weight: bold;
+      border: none;
+      border-radius: 12px;
+      padding: 0.7rem 1.5rem;
+      margin-top: 1rem;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+    .hint {
+      font-size: 0.9rem;
+      opacity: 0.7;
+      margin-top: -0.5rem;
+    }
+    .warning {
+      color: #ff5555;
+      font-size: 0.9rem;
+    }
   </style>
 </head>
 <body>
-  <h1>Редактор Wordsearch</h1>
+  <h1>🧩 Wordsearch Editor by Nika Shum</h1>
 
-  <label>Слова (через запятую):</label>
-  <input type="text" id="words" value="CAT, DOG, BIRD, FISH">
+  <div class="form-group">
+    <label for="words">Слова (через запятую):</label>
+    <input type="text" id="words" value="КОТ, ДОГ, ЛЕС, ДОМ">
+    <div class="hint" id="langHint">Язык будет определён автоматически.</div>
+    <div class="warning" id="langWarning" style="display:none;">Некоторые символы не соответствуют выбранному языку!</div>
+  </div>
 
-  <label>Размер грида (макс. 12):</label>
-  <input type="number" id="size" min="5" max="12" value="10">
+  <div class="form-group">
+    <label for="gridSize">Размер грида (6–12):</label>
+    <input type="number" id="gridSize" min="6" max="12" value="10">
+  </div>
+  <div class="form-group">
+    <label>Цвет фона ячеек:</label>
+    <div class="color-options" id="cellColorOptions">
+      <div class="color-square" style="background:#00ffff" data-color="#00ffff"></div>
+      <div class="color-square" style="background:#ff00ff" data-color="#ff00ff"></div>
+      <div class="color-square" style="background:#ffaa00" data-color="#ffaa00"></div>
+      <div class="color-square" style="background:#00ff88" data-color="#00ff88"></div>
+    </div>
+    <input type="hidden" id="cellColor" value="#00ffff">
+  </div>
 
-  <label>Фраза победы:</label>
-  <input type="text" id="winText" value="Ты нашёл все слова!">
+  <div class="form-group">
+    <label>Цвет рамки:</label>
+    <div class="color-options" id="borderColorOptions">
+      <div class="color-square" style="background:#00ffff" data-color="#00ffff"></div>
+      <div class="color-square" style="background:#ff0000" data-color="#ff0000"></div>
+      <div class="color-square" style="background:#ffffff" data-color="#ffffff"></div>
+      <div class="color-square" style="background:#ffaa00" data-color="#ffaa00"></div>
+    </div>
+    <input type="hidden" id="borderColor" value="#00ffff">
+  </div>
 
-  <label>Цвет фона ячеек (градиент):</label>
-  <input type="color" id="bgColor" value="#00ffff">
+  <div class="form-group">
+    <label>Цвет текста:</label>
+    <div class="color-options" id="textColorOptions">
+      <div class="color-square" style="background:#00ffff" data-color="#00ffff"></div>
+      <div class="color-square" style="background:#ffffff" data-color="#ffffff"></div>
+      <div class="color-square" style="background:#ff00ff" data-color="#ff00ff"></div>
+      <div class="color-square" style="background:#00ff88" data-color="#00ff88"></div>
+    </div>
+    <input type="hidden" id="textColor" value="#00ffff">
+  </div>
 
-  <label>Цвет рамки:</label>
-  <input type="color" id="borderColor" value="#00ffff">
+  <div class="form-group">
+    <label>Цвет свечения (если включено):</label>
+    <div class="color-options" id="glowColorOptions">
+      <div class="color-square" style="background:#00ffff" data-color="#00ffff"></div>
+      <div class="color-square" style="background:#ff00ff" data-color="#ff00ff"></div>
+      <div class="color-square" style="background:#ffaa00" data-color="#ffaa00"></div>
+      <div class="color-square" style="background:#00ff88" data-color="#00ff88"></div>
+    </div>
+    <input type="hidden" id="glowColor" value="#00ffff">
+  </div>
 
-  <label>Цвет текста:</label>
-  <input type="color" id="textColor" value="#00ffff">
+  <div class="form-group">
+    <label>Шрифт:</label>
+    <select id="font">
+      <option value="Roboto">Roboto</option>
+      <option value="Comic Neue">Comic Neue</option>
+      <option value="Orbitron" selected>Orbitron</option>
+      <option value="Baloo 2">Baloo 2</option>
+      <option value="Comfortaa">Comfortaa</option>
+      <option value="Michroma">Michroma</option>
+      <option value="Fredoka">Fredoka</option>
+      <option value="M PLUS Rounded 1c">M PLUS Rounded 1c</option>
+      <option value="Ruslan Display">Ruslan Display</option>
+      <option value="ZCOOL KuaiLe">ZCOOL KuaiLe</option>
+      <option value="Yomogi">Yomogi</option>
+      <option value="Noto Sans JP">Noto Sans JP</option>
+      <option value="Noto Sans SC">Noto Sans SC</option>
+    </select>
+  </div>
 
-  <label>Цвет свечения:</label>
-  <input type="color" id="glowColor" value="#00ffff">
+  <div class="form-group">
+    <label>Тема:</label>
+    <select id="theme">
+      <option value="default">Обычная</option>
+      <option value="rainbow">Радужная (переливающиеся буквы)</option>
+    </select>
+  </div>
 
-  <label>Шрифт:</label>
-  <select id="font">
-    <option value="Roboto">Roboto</option>
-    <option value="Comic Neue">Comic Neue</option>
-    <option value="Orbitron">Orbitron</option>
-    <option value="Baloo 2">Baloo 2</option>
-    <option value="Comfortaa">Comfortaa</option>
-    <option value="Michroma">Michroma</option>
-    <option value="Fredoka">Fredoka</option>
-    <option value="M PLUS Rounded 1c">M PLUS Rounded 1c</option>
-    <option value="Ruslan Display">Ruslan Display</option>
-    <option value="ZCOOL KuaiLe">ZCOOL KuaiLe</option>
-    <option value="Yomogi">Yomogi</option>
-  </select>
+  <div class="form-group">
+    <label>Расположение списка слов:</label>
+    <select id="wordlistPosition">
+      <option value="wordlist-bottom">Снизу</option>
+      <option value="wordlist-top">Сверху</option>
+      <option value="wordlist-left">Слева</option>
+      <option value="wordlist-right">Справа</option>
+    </select>
+  </div>
 
-  <label>Тема:</label>
-  <select id="theme">
-    <option value="default">Обычная</option>
-    <option value="rainbow">Радужная</option>
-  </select>
+  <div class="form-group">
+    <label for="winText">Фраза победы:</label>
+    <input type="text" id="winText" value="Ты нашёл все слова!">
+  </div>
 
-  <label>Уровень сложности:</label>
-  <select id="level">
-    <option value="easy">Лёгкий (→ ↓)</option>
-    <option value="medium" selected>Средний (→ ↓ ↘ ↙)</option>
-    <option value="hard">Сложный (все 8 направлений)</option>
-  </select>
-
-  <label>Положение списка слов:</label>
-  <select id="wordListPosition">
-    <option value="wordlist-top">Сверху</option>
-    <option value="wordlist-bottom" selected>Снизу</option>
-    <option value="wordlist-left">Слева</option>
-    <option value="wordlist-right">Справа</option>
-  </select>
-
-  <label><input type="checkbox" id="neon" checked> Неоновое свечение</label>
-  <label><input type="checkbox" id="sparkles"> Блёстки при клике</label>
+  <div class="form-group">
+    <label>Дополнительно:</label>
+    <label><input type="checkbox" id="glow" checked> Неоновое свечение</label>
+    <label><input type="checkbox" id="sparkles"> Блёстки при клике</label>
+  </div>
 
   <button onclick="generateCode()">Сгенерировать HTML</button>
+<script>
+  // Цветовые кружки
+  function setupColorPicker(groupId, hiddenInputId) {
+    document.querySelectorAll(`#${groupId} .color-square`).forEach(square => {
+      square.addEventListener('click', () => {
+        document.querySelectorAll(`#${groupId} .color-square`).forEach(sq => {
+          sq.classList.remove('selected');
+        });
+        square.classList.add('selected');
+        document.getElementById(hiddenInputId).value = square.dataset.color;
+      });
+    });
+    // Автовыбор первого
+    document.querySelector(`#${groupId} .color-square`).classList.add('selected');
+  }
 
-  <label>Готовый HTML:</label>
-  <textarea id="result" readonly></textarea>
+  setupColorPicker("cellColorOptions", "cellColor");
+  setupColorPicker("borderColorOptions", "borderColor");
+  setupColorPicker("textColorOptions", "textColor");
+  setupColorPicker("glowColorOptions", "glowColor");
 
-  <div id="previewContainer">
-    <iframe id="preview"></iframe>
-  </div>
-  <script>
-    async function generateCode() {
-      const words = document.getElementById("words").value.trim();
-      const size = document.getElementById("size").value;
-      const winText = document.getElementById("winText").value.trim();
-      const bgColor = document.getElementById("bgColor").value;
-      const borderColor = document.getElementById("borderColor").value;
-      const textColor = document.getElementById("textColor").value;
-      const glowColor = document.getElementById("glowColor").value;
-      const font = document.getElementById("font").value;
-      const theme = document.getElementById("theme").value;
-      const level = document.getElementById("level").value;
-      const wordListPosition = document.getElementById("wordListPosition").value;
-      const neon = document.getElementById("neon").checked;
-      const sparkles = document.getElementById("sparkles").checked;
+  // Определение языка по первым буквам слов
+  function detectLanguage(words) {
+    const text = words.join('').toLowerCase();
+    if (/[\u3040-\u30ff\u31f0-\u31ff]/.test(text)) return 'ja'; // Японский
+    if (/[\u4e00-\u9fff]/.test(text)) return 'zh'; // Китайский
+    if (/[а-яё]/i.test(text)) return 'ru'; // Русский
+    if (/[a-z]/i.test(text)) return 'en'; // Английский
+    if (/[éàèùçôâêîëïü]/i.test(text)) return 'fr'; // Французский
+    if (/[äöüß]/i.test(text)) return 'de'; // Немецкий
+    if (/[ñáéíóú]/i.test(text)) return 'es'; // Испанский
+    return 'en';
+  }
 
-      const template = `
+  // Генерация HTML
+  async function generateCode() {
+    const wordsInput = document.getElementById("words").value.trim();
+    const words = wordsInput.split(",").map(w => w.trim().toUpperCase()).filter(w => w !== "");
+
+    if (words.length === 0) {
+      alert("Введите хотя бы одно слово");
+      return;
+    }
+
+    const size = document.getElementById("size").value;
+    const winText = document.getElementById("winText").value;
+    const font = document.getElementById("font").value;
+    const theme = document.getElementById("theme").value;
+    const glow = document.getElementById("glow").checked;
+    const sparkles = document.getElementById("sparkles").checked;
+    const position = document.getElementById("wordlistPosition").value;
+
+    const cellColor = document.getElementById("cellColor").value;
+    const borderColor = document.getElementById("borderColor").value;
+    const textColor = document.getElementById("textColor").value;
+    const glowColor = document.getElementById("glowColor").value;
+
+    const lang = detectLanguage(words);
+
+    // Шаблон будет в части 4
+    const fullHTML = buildHTML({
+      words,
+      size,
+      winText,
+      font,
+      theme,
+      glow,
+      sparkles,
+      position,
+      cellColor,
+      borderColor,
+      textColor,
+      glowColor,
+      lang
+    });
+
+    document.getElementById("result").value = fullHTML;
+
+    const blob = new Blob([fullHTML], { type: "text/html" });
+    document.getElementById("preview").src = URL.createObjectURL(blob);
+  }
+</script>
+<script>
+function buildHTML({
+  words,
+  size,
+  winText,
+  font,
+  theme,
+  glow,
+  sparkles,
+  position,
+  cellColor,
+  borderColor,
+  textColor,
+  glowColor,
+  lang
+}) {
+  const fontLink = `https://fonts.googleapis.com/css2?family=${font.replace(/ /g, '+')}&display=swap`;
+  const wordList = JSON.stringify(words);
+
+  return `
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="${lang}">
 <head>
   <meta charset="UTF-8">
   <title>Wordsearch Game</title>
-  <link href="https://fonts.googleapis.com/css2?family=${font.replace(/ /g, '+')}&display=swap" rel="stylesheet">
+  <link href="${fontLink}" rel="stylesheet">
   <style>
     :root {
-      --main-color: ${bgColor};
       --font-family: '${font}', sans-serif;
-      --cell-bg: radial-gradient(circle, ${bgColor}cc 0%, #008080b3 100%);
+      --cell-bg: ${theme === "rainbow" ? "linear-gradient(45deg, red, orange, yellow, green, cyan, blue, violet)" : cellColor};
       --border-color: ${borderColor};
       --text-color: ${textColor};
       --glow-color: ${glowColor};
@@ -156,59 +332,52 @@
     html, body {
       margin: 0;
       padding: 0;
-      width: 100vw;
-      height: 100vh;
       background: transparent;
       font-family: var(--font-family);
       display: flex;
       flex-direction: column;
-      justify-content: center;
       align-items: center;
+      justify-content: center;
+      overflow: hidden;
     }
 
     #gameWrapper {
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
-      gap: 12px;
-      position: relative;
+      gap: 1rem;
     }
 
     #grid {
       display: grid;
-      gap: 6px;
+      gap: 4px;
     }
 
     .cell {
-      width: 42px;
-      height: 42px;
-      border-radius: 10px;
+      width: 38px;
+      height: 38px;
       background: var(--cell-bg);
       border: 2px solid var(--border-color);
       color: var(--text-color);
-      font-family: var(--font-family);
       font-weight: bold;
-      font-size: 22px;
+      font-size: 20px;
       display: flex;
       justify-content: center;
       align-items: center;
       user-select: none;
+      border-radius: 8px;
+      ${glow ? "box-shadow: 0 0 6px var(--glow-color), inset 0 0 4px var(--glow-color);" : ""}
       transition: 0.2s;
     }
 
     .cell.selected {
       background: rgba(255,255,255,0.2);
-      ${neon ? 'box-shadow: inset 0 0 10px var(--glow-color);' : ''}
+      box-shadow: inset 0 0 8px var(--glow-color);
     }
 
     .cell.found {
-      background: rgba(56, 255, 142, 0.4);
+      background: rgba(56, 255, 142, 0.3);
       color: #38ff8e;
-    }
-
-    .cell.glow {
-      box-shadow: 0 0 12px var(--glow-color), inset 0 0 8px var(--glow-color);
     }
 
     .cell.rainbow {
@@ -216,217 +385,228 @@
     }
 
     @keyframes rainbowGlow {
-      0%   { box-shadow: 0 0 12px #ff0088; color: #ff0088; }
-      25%  { box-shadow: 0 0 12px #00ffff; color: #00ffff; }
-      50%  { box-shadow: 0 0 12px #00ff55; color: #00ff55; }
-      75%  { box-shadow: 0 0 12px #ffaa00; color: #ffaa00; }
-      100% { box-shadow: 0 0 12px #ff0088; color: #ff0088; }
+      0%   { box-shadow: 0 0 8px #ff0088; color: #ff0088; }
+      25%  { box-shadow: 0 0 8px #00ffff; color: #00ffff; }
+      50%  { box-shadow: 0 0 8px #00ff55; color: #00ff55; }
+      75%  { box-shadow: 0 0 8px #ffaa00; color: #ffaa00; }
+      100% { box-shadow: 0 0 8px #ff0088; color: #ff0088; }
     }
 
     #wordList {
       display: flex;
       flex-wrap: wrap;
-      justify-content: center;
+      gap: 8px;
       max-width: 90vw;
-      gap: 12px;
-      font-size: 18px;
-      font-family: var(--font-family);
-      color: var(--text-color);
-      background: var(--cell-bg);
-      padding: 10px;
-      border-radius: 12px;
-      border: 2px solid var(--border-color);
+      font-size: 16px;
+      justify-content: center;
     }
 
     #wordList span {
+      padding: 6px 10px;
+      border-radius: 8px;
       background: var(--cell-bg);
-      border: 2px solid var(--border-color);
-      border-radius: 10px;
-      padding: 6px 12px;
-      font-family: var(--font-family);
-      font-size: 18px;
-      font-weight: bold;
       color: var(--text-color);
-      user-select: none;
-      transition: 0.2s;
+      font-weight: bold;
+      border: 1px solid var(--border-color);
     }
 
     #wordList span.found {
       text-decoration: line-through;
+      background: rgba(0, 0, 0, 0.2);
       color: #38ff8e;
-      background: rgba(0, 0, 0, 0.3);
     }
 
     .wordlist-top { flex-direction: column-reverse; }
     .wordlist-bottom { flex-direction: column; }
     .wordlist-left { flex-direction: row-reverse; align-items: flex-start; }
     .wordlist-right { flex-direction: row; align-items: flex-start; }
-    .wordlist-hidden #wordList { display: none; }
+
+    #winMessage {
+      font-size: 20px;
+      margin-top: 10px;
+      color: var(--text-color);
+      font-family: var(--font-family);
+      display: none;
+    }
+
+    footer {
+      margin-top: 1rem;
+      font-size: 0.8rem;
+      opacity: 0.6;
+    }
   </style>
 </head>
 <body>
-  <div id="gameWrapper" class="${wordListPosition}">
+  <div id="gameWrapper" class="wordlist-${position}">
     <div id="grid"></div>
     <div id="wordList"></div>
+    <div id="winMessage">${winText}</div>
+    <footer>(C) Корпорация Геймификации Будущего, 2025</footer>
   </div>
   <script>
-    const words = ${JSON.stringify(words.split(',').map(w => w.trim().toUpperCase()))};
+    const words = ${wordList};
     const gridSize = ${size};
-    const level = "${level}";
-    const winText = ${JSON.stringify(winText)};
-    const font = "${font}";
-    const directionsByLevel = {
-      easy: [[0,1], [1,0]],
-      medium: [[0,1], [1,0], [1,1], [-1,1]],
-      hard: [[0,1], [1,0], [-1,0], [0,-1], [1,1], [-1,1], [-1,-1], [1,-1]]
-    };
-    const directions = directionsByLevel[level];
-    const grid = Array.from({length: gridSize}, () => Array(gridSize).fill(""));
+  </script>
+`;
+}
+</script>
+<script>
+const directions = [
+  [0,1], [1,0], [-1,0], [0,-1],
+  [1,1], [-1,1], [-1,-1], [1,-1]
+];
 
-    function fits(word, x, y, dx, dy) {
+const grid = Array.from({length: gridSize}, () => Array(gridSize).fill(""));
+
+function fits(word, x, y, dx, dy) {
+  for (let i = 0; i < word.length; i++) {
+    const nx = x + dx * i, ny = y + dy * i;
+    if (nx < 0 || ny < 0 || nx >= gridSize || ny >= gridSize) return false;
+    if (grid[ny][nx] !== "" && grid[ny][nx] !== word[i]) return false;
+  }
+  return true;
+}
+
+function place(word) {
+  for (let t = 0; t < 200; t++) {
+    const [dx, dy] = directions[Math.floor(Math.random() * directions.length)];
+    const x = Math.floor(Math.random() * gridSize);
+    const y = Math.floor(Math.random() * gridSize);
+    if (fits(word, x, y, dx, dy)) {
       for (let i = 0; i < word.length; i++) {
-        const nx = x + dx * i;
-        const ny = y + dy * i;
-        if (nx < 0 || ny < 0 || nx >= gridSize || ny >= gridSize) return false;
-        if (grid[ny][nx] !== "" && grid[ny][nx] !== word[i]) return false;
+        grid[y + dy * i][x + dx * i] = word[i];
       }
       return true;
     }
+  }
+  return false;
+}
 
-    function place(word) {
-      for (let tries = 0; tries < 200; tries++) {
-        const [dx, dy] = directions[Math.floor(Math.random() * directions.length)];
-        const x = Math.floor(Math.random() * gridSize);
-        const y = Math.floor(Math.random() * gridSize);
-        if (fits(word, x, y, dx, dy)) {
-          for (let i = 0; i < word.length; i++) {
-            grid[y + dy * i][x + dx * i] = word[i];
-          }
-          return true;
+const insertedWords = [];
+words.forEach(w => {
+  const word = w.trim().toUpperCase();
+  if (word.length <= gridSize && place(word)) insertedWords.push(word);
+});
+
+for (let y = 0; y < gridSize; y++) {
+  for (let x = 0; x < gridSize; x++) {
+    if (!grid[y][x]) {
+      grid[y][x] = String.fromCharCode(65 + Math.floor(Math.random() * 26));
+    }
+  }
+}
+
+const gridEl = document.getElementById("grid");
+gridEl.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
+gridEl.innerHTML = "";
+
+for (let y = 0; y < gridSize; y++) {
+  for (let x = 0; x < gridSize; x++) {
+    const div = document.createElement("div");
+    div.className = "cell";
+    div.textContent = grid[y][x];
+    div.dataset.x = x;
+    div.dataset.y = y;
+    gridEl.appendChild(div);
+  }
+}
+
+const wordListEl = document.getElementById("wordList");
+insertedWords.forEach(word => {
+  const span = document.createElement("span");
+  span.textContent = word;
+  span.dataset.word = word;
+  wordListEl.appendChild(span);
+});
+
+const selected = [];
+const found = new Set();
+const winEl = document.getElementById("winMessage");
+
+const clickSound = new Audio("https://nikashum93.github.io/wordsearch1/click.mp3");
+const errorSound = new Audio("https://nikashum93.github.io/wordsearch1/error.mp3");
+const winSound = new Audio("https://nikashum93.github.io/wordsearch1/win.mp3");
+
+function sparkleAt(x, y) {
+  const s = document.createElement("div");
+  s.style.position = "absolute";
+  s.style.left = x + "px";
+  s.style.top = y + "px";
+  s.style.width = "8px";
+  s.style.height = "8px";
+  s.style.background = "#fff";
+  s.style.borderRadius = "50%";
+  s.style.boxShadow = "0 0 6px white";
+  s.style.pointerEvents = "none";
+  document.body.appendChild(s);
+  setTimeout(() => s.remove(), 300);
+}
+
+function playSound(snd) {
+  snd.currentTime = 0;
+  snd.play().catch(() => {});
+}
+
+function getWord() {
+  return selected.map(c => c.textContent).join("");
+}
+
+function clearSel(error = false) {
+  selected.forEach(c => {
+    c.classList.remove("selected");
+    if (error) {
+      c.style.background = "rgba(255,0,0,0.4)";
+      setTimeout(() => c.style.background = "", 300);
+    }
+  });
+  selected.length = 0;
+}
+
+function checkWord() {
+  const word = getWord();
+  const reversed = word.split("").reverse().join("");
+  const match = insertedWords.find(w => w === word || w === reversed);
+  if (match && !found.has(match)) {
+    selected.forEach(c => c.classList.add("found"));
+    document.querySelector(`#wordList span[data-word="${match}"]`)?.classList.add("found");
+    found.add(match);
+    playSound(clickSound);
+    if (found.size === insertedWords.length) {
+      winSound.play();
+      winEl.style.display = "block";
+      document.querySelectorAll(".cell").forEach(c => c.classList.add("rainbow"));
+    }
+    selected.length = 0;
+  } else {
+    playSound(errorSound);
+    clearSel(true);
+  }
+}
+
+document.querySelectorAll(".cell").forEach(cell => {
+  cell.addEventListener("click", e => {
+    if (cell.classList.contains("found") || selected.includes(cell)) return;
+    selected.push(cell);
+    cell.classList.add("selected");
+
+    if (${sparkles}) sparkleAt(e.clientX, e.clientY);
+
+    if (selected.length > 1) {
+      const dx = selected[1].dataset.x - selected[0].dataset.x;
+      const dy = selected[1].dataset.y - selected[0].dataset.y;
+      for (let i = 2; i < selected.length; i++) {
+        const cx = selected[i].dataset.x - selected[i - 1].dataset.x;
+        const cy = selected[i].dataset.y - selected[i - 1].dataset.y;
+        if (cx != dx || cy != dy) {
+          clearSel(true);
+          return;
         }
       }
-      return false;
     }
 
-    const insertedWords = [];
-    words.forEach(word => {
-      if (word.length <= gridSize && place(word)) {
-        insertedWords.push(word);
-      }
-    });
-
-    window.insertedWords = insertedWords;
-
-    for (let y = 0; y < gridSize; y++) {
-      for (let x = 0; x < gridSize; x++) {
-        if (!grid[y][x]) {
-          grid[y][x] = String.fromCharCode(1040 + Math.floor(Math.random() * 32)); // кириллица
-        }
-      }
-    }
-
-    const gridEl = document.getElementById("grid");
-    gridEl.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
-    gridEl.innerHTML = "";
-
-    for (let y = 0; y < gridSize; y++) {
-      for (let x = 0; x < gridSize; x++) {
-        const cell = document.createElement("div");
-        cell.className = "cell";
-        cell.dataset.x = x;
-        cell.dataset.y = y;
-        cell.textContent = grid[y][x];
-        gridEl.appendChild(cell);
-      }
-    }
-
-    const wordListEl = document.getElementById("wordList");
-    insertedWords.forEach(word => {
-      const el = document.createElement("span");
-      el.textContent = word;
-      el.dataset.word = word;
-      wordListEl.appendChild(el);
-    });
-  </script>
-  <script>
-    const selected = [];
-    const found = new Set();
-    const clickSound = new Audio("https://nikashum93.github.io/wordsearch1/click.mp3");
-    const errorSound = new Audio("https://nikashum93.github.io/wordsearch1/error.mp3");
-    const winSound = new Audio("https://nikashum93.github.io/wordsearch1/win.mp3");
-
-    function playSound(sound) {
-      sound.currentTime = 0;
-      sound.play().catch(() => {});
-    }
-
-    function getWordFromSelection() {
-      return selected.map(el => el.textContent).join("");
-    }
-
-    function clearSelection(error = false) {
-      selected.forEach(el => {
-        el.classList.remove("selected");
-        if (error) el.style.background = "rgba(255,0,0,0.4)";
-        setTimeout(() => el.style.background = "", 300);
-      });
-      selected.length = 0;
-    }
-
-    function checkWord() {
-      const word = getWordFromSelection();
-      const reversed = word.split("").reverse().join("");
-      const match = insertedWords.find(w => w === word || w === reversed);
-
-      if (match && !found.has(match)) {
-        selected.forEach(cell => cell.classList.add("found"));
-        document.querySelector(`#wordList span[data-word="${match}"]`)?.classList.add("found");
-        found.add(match);
-        if (found.size === insertedWords.length) {
-          winSound.play();
-          Array.from(document.querySelectorAll(".cell")).forEach(cell => {
-            cell.classList.add("rainbow");
-          });
-          alert(winText);
-        } else {
-          playSound(clickSound);
-        }
-        selected.length = 0;
-      } else {
-        playSound(errorSound);
-        clearSelection(true);
-      }
-    }
-
-    document.querySelectorAll(".cell").forEach(cell => {
-      cell.addEventListener("click", () => {
-        if (cell.classList.contains("found")) return;
-        if (selected.includes(cell)) return;
-
-        selected.push(cell);
-        cell.classList.add("selected");
-
-        if (selected.length > 1) {
-          const dx = selected[1].dataset.x - selected[0].dataset.x;
-          const dy = selected[1].dataset.y - selected[0].dataset.y;
-          for (let i = 2; i < selected.length; i++) {
-            const cx = selected[i].dataset.x - selected[i - 1].dataset.x;
-            const cy = selected[i].dataset.y - selected[i - 1].dataset.y;
-            if (cx != dx || cy != dy) {
-              clearSelection(true);
-              return;
-            }
-          }
-        }
-
-        if (selected.length >= 2) {
-          checkWord();
-        }
-      });
-    });
-  </script>
-  <footer style="margin-top: 2rem; font-size: 0.8rem; opacity: 0.5; text-align: center;">
-    &copy; Корпорация Геймификации Будущего, 2025
-  </footer>
+    if (selected.length >= 2) checkWord();
+  });
+});
+</script>
 </body>
 </html>
