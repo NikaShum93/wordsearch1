@@ -3,148 +3,129 @@
 <head>
   <meta charset="UTF-8">
   <title>Редактор Wordsearch</title>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron&family=Comfortaa&family=Comic+Neue&family=Roboto&family=Nunito&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto&family=Comic+Neue&family=Orbitron&family=Baloo+2&family=Comfortaa&family=Michroma&family=Fredoka&family=M+PLUS+Rounded+1c&family=Ruslan+Display&family=ZCOOL+KuaiLe&family=Yomogi&display=swap" rel="stylesheet">
   <style>
     body {
       background: #0a0a0a;
-      color: #00ffff;
-      font-family: 'Orbitron', sans-serif;
-      padding: 20px;
-    }
-    h1 {
-      text-align: center;
-      color: #38ff8e;
-    }
-    label {
-      display: block;
-      margin-top: 10px;
-      font-weight: bold;
+      color: white;
+      font-family: 'Comfortaa', sans-serif;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
     input, select, textarea {
-      width: 100%;
-      padding: 6px;
-      margin-top: 5px;
-      border-radius: 8px;
+      padding: 0.6rem;
+      margin: 0.5rem;
+      border-radius: 10px;
       border: none;
-      font-size: 16px;
+      font-size: 1rem;
     }
-    textarea {
-      height: 80px;
-    }
-    .group {
-      margin-bottom: 20px;
+    label {
+      margin-top: 1rem;
+      display: block;
+      font-weight: bold;
     }
     button {
-      background-color: #38ff8e;
-      color: #000;
-      font-size: 18px;
-      padding: 10px 20px;
-      border-radius: 10px;
-      cursor: pointer;
+      background: #00ffff;
+      color: black;
+      font-weight: bold;
       border: none;
-      transition: 0.2s;
+      border-radius: 8px;
+      padding: 0.7rem 1.2rem;
+      margin-top: 1rem;
+      cursor: pointer;
     }
-    button:hover {
-      background-color: #2ed87b;
+    #previewContainer {
+      width: 100%;
+      height: 480px;
+      margin-top: 2rem;
+      border: 2px solid #00ffff;
     }
-    #preview {
-      margin-top: 30px;
-      padding: 10px;
-      background: #111;
-      border: 2px solid #38ff8e;
-      border-radius: 10px;
-      white-space: pre-wrap;
-      color: #fff;
-      font-family: monospace;
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
     }
   </style>
 </head>
 <body>
   <h1>Редактор Wordsearch</h1>
 
-  <div class="group">
-    <label for="words">Слова (через запятую):</label>
-    <textarea id="words">КОШКА, СОБАКА, СОЛНЦЕ, МОРОЗ</textarea>
-  </div>
+  <label>Слова (через запятую):</label>
+  <input type="text" id="words" value="CAT, DOG, BIRD, FISH">
 
-  <div class="group">
-    <label for="gridSize">Размер сетки (макс 12):</label>
-    <input type="number" id="gridSize" value="10" min="6" max="12">
-  </div>
+  <label>Размер грида (макс. 12):</label>
+  <input type="number" id="size" min="5" max="12" value="10">
 
-  <div class="group">
-    <label for="font">Шрифт:</label>
-    <select id="font">
-      <option value="Orbitron">Классика</option>
-      <option value="Roboto">Робот</option>
-      <option value="Comic Neue">Мультяшный</option>
-      <option value="Comfortaa">Милый</option>
-    </select>
-  </div>
+  <label>Фраза победы:</label>
+  <input type="text" id="winText" value="Ты нашёл все слова!">
 
-  <div class="group">
-    <label for="cellColor">Цвет ячеек (HEX):</label>
-    <input type="color" id="cellColor" value="#00ffff">
-  </div>
+  <label>Цвет темы (hex):</label>
+  <input type="color" id="color" value="#00ffff">
 
-  <div class="group">
-    <label for="borderColor">Цвет рамки ячеек:</label>
-    <input type="color" id="borderColor" value="#00ffff">
-  </div>
-
-  <div class="group">
-    <label for="textColor">Цвет букв:</label>
-    <input type="color" id="textColor" value="#00ffff">
-  </div>
-
-  <div class="group">
-    <label for="glowType">Эффект свечения:</label>
-    <select id="glowType">
-      <option value="none">Без свечения</option>
-      <option value="neon">Неон</option>
-      <option value="rainbow">Радужный</option>
-    </select>
-  </div>
+  <label>Шрифт:</label>
+  <select id="font">
+    <option value="Roboto">Roboto</option>
+    <option value="Comic Neue">Comic Neue</option>
+    <option value="Orbitron">Orbitron</option>
+    <option value="Baloo 2">Baloo 2</option>
+    <option value="Comfortaa">Comfortaa</option>
+    <option value="Michroma">Michroma</option>
+    <option value="Fredoka">Fredoka</option>
+    <option value="M PLUS Rounded 1c">M PLUS Rounded 1c</option>
+    <option value="Ruslan Display">Ruslan Display</option>
+    <option value="ZCOOL KuaiLe">ZCOOL KuaiLe</option>
+    <option value="Yomogi">Yomogi</option>
+  </select>
+  <label>Тема оформления:</label>
+  <select id="theme">
+    <option value="default">Обычная</option>
+    <option value="rainbow">Радужная</option>
+  </select>
 
   <button onclick="generateCode()">Сгенерировать HTML</button>
 
-  <div id="preview"></div>
+  <label>Готовый HTML:</label>
+  <textarea id="result" readonly></textarea>
+
+  <div id="previewContainer">
+    <iframe id="preview"></iframe>
+  </div>
 
   <script>
-    function generateCode() {
-      const words = document.getElementById('words').value.split(',').map(w => w.trim().toUpperCase()).filter(w => w.length > 1);
-      const gridSize = Math.min(12, parseInt(document.getElementById('gridSize').value));
-      const font = document.getElementById('font').value;
-      const cellColor = document.getElementById('cellColor').value;
-      const borderColor = document.getElementById('borderColor').value;
-      const textColor = document.getElementById('textColor').value;
-      const glowType = document.getElementById('glowType').value;
+    async function generateCode() {
+      const words = document.getElementById("words").value.trim();
+      const size = document.getElementById("size").value;
+      const winText = document.getElementById("winText").value.trim();
+      const color = document.getElementById("color").value;
+      const font = document.getElementById("font").value;
+      const theme = document.getElementById("theme").value;
 
-      const result = `<!DOCTYPE html>
-<!-- HTML сгенерирован редактором Wordsearch -->
-<html lang="ru">
-<head>
-  <meta charset="UTF-8">
-  <title>Wordsearch</title>
-  <script>
-    window.gameData = {
-      words: ${JSON.stringify(words)},
-      size: ${gridSize},
-      font: "${font}",
-      cellColor: "${cellColor}",
-      borderColor: "${borderColor}",
-      textColor: "${textColor}",
-      glow: "${glowType}"
+      const templateUrl = "main.html"; // Загружаем шаблон из main.html
+      const response = await fetch(templateUrl);
+      let template = await response.text();
+      // Заменяем параметры в шаблоне
+      template = template
+        .replace(/__WORDS__/, JSON.stringify(words.split(',').map(w => w.trim())))
+        .replace(/__SIZE__/, size)
+        .replace(/__WINTEXT__/, JSON.stringify(winText))
+        .replace(/__COLOR__/, color)
+        .replace(/__FONT__/, `'${font}', sans-serif`)
+        .replace(/__THEME__/, theme);
+
+      // Показываем сгенерированный код
+      document.getElementById("result").value = template;
+
+      // Предпросмотр
+      const preview = document.getElementById("preview");
+      const blob = new Blob([template], { type: "text/html" });
+      preview.src = URL.createObjectURL(blob);
     }
   </script>
-  <script src="https://nikashum93.github.io/wordsearch1/main.html"></script>
-</head>
-<body>
-</body>
-</html>`;
 
-      document.getElementById('preview').textContent = result;
-    }
-  </script>
+  <footer style="margin-top: 2rem; opacity: 0.6; font-size: 0.8rem;">
+    (c) Корпорация Геймификации Будущего, 2025
+  </footer>
 </body>
 </html>
