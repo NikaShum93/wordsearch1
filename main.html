@@ -24,8 +24,17 @@
       background: transparent;
       font-family: var(--font-family);
       display: flex;
+      flex-direction: column;
       justify-content: center;
       align-items: center;
+    }
+
+    #gameWrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
     }
 
     #grid {
@@ -65,270 +74,74 @@
       75%  { box-shadow: 0 0 12px #ffaa00; color: #ffaa00; }
       100% { box-shadow: 0 0 12px #ff0088; color: #ff0088; }
     }
+
+    #wordList {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      max-width: 90vw;
+      gap: 12px;
+      font-size: 18px;
+      font-family: var(--font-family);
+      color: var(--text-color);
+    }
+
+    #wordList span.found {
+      text-decoration: line-through;
+      color: #38ff8e;
+    }
+
+    /* Варианты размещения списка */
+    .wordlist-top { flex-direction: column-reverse; }
+    .wordlist-bottom { flex-direction: column; }
+    .wordlist-left { flex-direction: row-reverse; align-items: flex-start; }
+    .wordlist-right { flex-direction: row; align-items: flex-start; }
+    .wordlist-hidden #wordList { display: none; }
   </style>
 </head>
 <body>
-  <div id="grid"></div>
+  <div id="gameWrapper" class="wordlist-bottom">
+    <div id="grid"></div>
+    <div id="wordList"></div>
+  </div>
+
   <script>
-    const params = new URLSearchParams(window.location.search);
+    const wordList = document.getElementById("wordList");
+    const gameWrapper = document.getElementById("gameWrapper");
 
-    const gridSize = Math.max(5, Math.min(15, parseInt(params.get("gridSize")) || 10));
-    const words = (params.get("words") || "")
-      .split(",")
-      .map(w => w.trim())
-      .filter(Boolean);
+    // Пример: установка позиции через URL ?wordlist=top
+    const urlParams = new URLSearchParams(window.location.search);
+    const wordlistPosition = urlParams.get("wordlist") || "bottom";
+    gameWrapper.classList.remove("wordlist-top", "wordlist-bottom", "wordlist-left", "wordlist-right", "wordlist-hidden");
+    gameWrapper.classList.add("wordlist-" + wordlistPosition);
 
-    const winText = decodeURIComponent(params.get("winText") || "Ты нашёл все слова!");
-    const caseType = params.get("case") || "uppercase";
-    const alphabet = params.get("alphabet") || "latin";
-    const fontStyle = params.get("fontStyle") || "classic";
-    const cellColor = params.get("cellColor") || "rgba(0,0,0,0.5)";
-    const borderColor = params.get("cellBorder") || "#00ffff";
-    const textColor = params.get("textColor") || borderColor;
-    const glowColor = params.get("glowColor") || "#00ffff";
-    const glowType = params.get("glowType") || "none";
+    // Используем массив реально вставленных слов, если он есть
+    const usedWords = window.insertedWords || words;
 
-    const alphabets = {
-      latin: "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
-      cyrillic: "АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ",
-      french: "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
-      german: "ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÜß",
-      spanish: "ABCDEFGHIJKLMNÑOPQRSTUVWXYZ",
-      pinyin: "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
-      hiragana: "あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん"
-    };
-    const fontPresets = {
-      latin: {
-        classic: "Roboto",
-        comic: "Comic Neue",
-        cute: "Baloo 2",
-        tech: "Orbitron"
-      },
-      cyrillic: {
-        classic: "Roboto Slab",
-        comic: "Ruslan Display",
-        cute: "Comfortaa",
-        tech: "Michroma"
-      },
-      french: {
-        classic: "Nunito",
-        comic: "Comic Neue",
-        cute: "Baloo 2",
-        tech: "Orbitron"
-      },
-      german: {
-        classic: "Open Sans",
-        comic: "Fredoka",
-        cute: "M PLUS Rounded 1c",
-        tech: "Orbitron"
-      },
-      spanish: {
-        classic: "Merriweather",
-        comic: "Comic Neue",
-        cute: "Baloo 2",
-        tech: "Orbitron"
-      },
-      pinyin: {
-        classic: "Noto Sans SC",
-        comic: "ZCOOL KuaiLe",
-        cute: "Ma Shan Zheng",
-        tech: "Orbitron"
-      },
-      hiragana: {
-        classic: "Noto Sans JP",
-        comic: "Yomogi",
-        cute: "Nico Moji",
-        tech: "DotGothic16"
-      }
-    };
-
-    const alphabetSet = alphabets[alphabet] || alphabets.latin;
-    const selectedFont = (fontPresets[alphabet] || fontPresets.latin)[fontStyle] || "Orbitron";
-
-    // Устанавливаем параметры в CSS
-    document.documentElement.style.setProperty("--font-family", `'${selectedFont}', sans-serif`);
-    document.documentElement.style.setProperty("--cell-bg", cellColor);
-    document.documentElement.style.setProperty("--border-color", borderColor);
-    document.documentElement.style.setProperty("--text-color", textColor);
-    document.documentElement.style.setProperty("--glow-color", glowColor);
-  const level = params.get("level") || "medium";
-  const directions = {
-    easy: [[1, 0], [0, 1]],
-    medium: [[1, 0], [0, 1], [1, 1], [-1, 1]],
-    hard: [[1, 0], [0, 1], [1, 1], [-1, 1], [1, -1], [0, -1], [-1, 0], [-1, -1]]
-  };
-
-  const gridArray = Array.from({ length: gridSize }, () =>
-    Array(gridSize).fill("")
-  );
-
-  // Размещение слов
-  for (const raw of words) {
-    const word = [...raw.toUpperCase()].filter(l => alphabetSet.includes(l));
-    if (word.length > gridSize) {
-      console.warn(`⚠️ Слово "${raw}" слишком длинное для сетки ${gridSize}x${gridSize}`);
-      continue;
-    }
-
-    let placed = false;
-    for (let attempt = 0; attempt < 100; attempt++) {
-      const [dx, dy] = directions[level][Math.floor(Math.random() * directions[level].length)];
-      const x = Math.floor(Math.random() * gridSize);
-      const y = Math.floor(Math.random() * gridSize);
-
-      let fits = true;
-      for (let i = 0; i < word.length; i++) {
-        const nx = x + dx * i;
-        const ny = y + dy * i;
-        if (nx < 0 || ny < 0 || nx >= gridSize || ny >= gridSize) {
-          fits = false;
-          break;
-        }
-        if (gridArray[ny][nx] && gridArray[ny][nx] !== word[i]) {
-          fits = false;
-          break;
-        }
-      }
-
-      if (fits) {
-        for (let i = 0; i < word.length; i++) {
-          const nx = x + dx * i;
-          const ny = y + dy * i;
-          gridArray[ny][nx] = word[i];
-        }
-        placed = true;
-        break;
-      }
-    }
-
-    if (!placed) {
-      console.warn(`⚠️ Не удалось вставить слово: ${raw}`);
-    }
-  }
-
-  // Заполнение оставшихся клеток случайными буквами
-  for (let y = 0; y < gridSize; y++) {
-    for (let x = 0; x < gridSize; x++) {
-      if (!gridArray[y][x]) {
-        const rand = alphabetSet[Math.floor(Math.random() * alphabetSet.length)];
-        gridArray[y][x] = caseType === "lowercase" ? rand.toLowerCase() : rand.toUpperCase();
-      }
-    }
-  }
-
-  // Отрисовка грида
-  const grid = document.getElementById("grid");
-  grid.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
-
-  for (let y = 0; y < gridSize; y++) {
-    for (let x = 0; x < gridSize; x++) {
-      const div = document.createElement("div");
-      div.className = "cell";
-      div.textContent = gridArray[y][x];
-
-      if (glowType === "neon") div.classList.add("glow");
-      if (glowType === "rainbow") div.classList.add("rainbow");
-
-      grid.appendChild(div);
-    }
-  }
-  let selectedCells = [];
-  let foundWords = [];
-
-  function clearSelection(error = false) {
-    selectedCells.forEach(cell => {
-      cell.classList.remove("selected");
-      if (error) {
-        cell.style.background = "#e74c3c";
-        cell.style.color = "#fff";
-        setTimeout(() => {
-          cell.style.background = "";
-          cell.style.color = "";
-        }, 300);
-      }
+    usedWords.forEach(word => {
+      const span = document.createElement("span");
+      span.textContent = word.toUpperCase();
+      span.dataset.word = word.toUpperCase();
+      wordList.appendChild(span);
     });
-    selectedCells = [];
-  }
 
-  function getCellCoords(cell) {
-    const index = Array.from(grid.children).indexOf(cell);
-    return {
-      x: index % gridSize,
-      y: Math.floor(index / gridSize)
-    };
-  }
-
-  function checkDirection(cells) {
-    if (cells.length < 2) return false;
-    const { x: x0, y: y0 } = getCellCoords(cells[0]);
-    const { x: x1, y: y1 } = getCellCoords(cells[1]);
-    const dx = x1 - x0;
-    const dy = y1 - y0;
-    for (let i = 1; i < cells.length; i++) {
-      const { x, y } = getCellCoords(cells[i]);
-      if (x !== x0 + dx * i || y !== y0 + dy * i) return false;
+    function markWordFound(word) {
+      const el = document.querySelector(`#wordList span[data-word="${word}"]`);
+      if (el) el.classList.add("found");
     }
-    return true;
-  }
 
-  function handleClick(e) {
-    const cell = e.target;
-    if (!cell.classList.contains("cell")) return;
-    if (selectedCells.includes(cell)) return;
-
-    cell.classList.add("selected");
-    selectedCells.push(cell);
-
-    const selectedWord = selectedCells.map(c => c.textContent).join("");
-    const normalizedWord = selectedWord.toUpperCase();
-
-    const matches = words.some(
-      word => word.toUpperCase() === normalizedWord
-    );
-
-    const isDirectionOk = checkDirection(selectedCells);
-
+    // Вызов markWordFound(normalizedWord) в if (matches && isDirectionOk)
     if (matches && isDirectionOk) {
       selectedCells.forEach(cell => {
         cell.classList.add("glow");
         cell.style.background = "#38ff8e";
         cell.style.color = "#000";
       });
+      markWordFound(normalizedWord);
       foundWords.push(normalizedWord);
       selectedCells = [];
-
-      if (foundWords.length === words.length) {
-        setTimeout(() => {
-          const message = document.createElement("div");
-          message.textContent = winText;
-          message.style.position = "fixed";
-          message.style.top = "50%";
-          message.style.left = "50%";
-          message.style.transform = "translate(-50%, -50%)";
-          message.style.padding = "20px 30px";
-          message.style.background = "rgba(0,0,0,0.8)";
-          message.style.border = "2px solid var(--main-color)";
-          message.style.borderRadius = "16px";
-          message.style.fontSize = "24px";
-          message.style.color = "var(--main-color)";
-          message.style.fontFamily = "var(--font-family)";
-          message.style.boxShadow = "0 0 20px var(--main-color)";
-          document.body.appendChild(message);
-        }, 500);
-      }
-    } else {
-      const isMistake = !words.some(w =>
-        w.toUpperCase().startsWith(normalizedWord)
-      );
-      if (isMistake || selectedCells.length > gridSize) {
-        clearSelection(true);
-      }
+      [... остальной код ...]
     }
-  }
-
-  // Включаем обработчик
-  grid.addEventListener("click", handleClick);
-</script>
+  </script>
 </body>
 </html>
-
