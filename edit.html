@@ -2,208 +2,148 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>Редактор Wordsearch by Nika Shum</title>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron&display=swap" rel="stylesheet">
+  <title>Редактор Wordsearch</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron&family=Comfortaa&family=Comic+Neue&family=Roboto&family=Nunito&display=swap" rel="stylesheet">
   <style>
     body {
-      margin: 0;
-      padding: 30px;
-      background: radial-gradient(circle at center, #11161e, #0a0f14);
-      color: #0ff;
+      background: #0a0a0a;
+      color: #00ffff;
       font-family: 'Orbitron', sans-serif;
-      display: flex;
-      flex-direction: column;
-      gap: 24px;
+      padding: 20px;
     }
-
     h1 {
-      font-size: 1.6em;
       text-align: center;
-      color: #0ff;
-      text-shadow: 0 0 8px #0ffb;
+      color: #38ff8e;
     }
-
     label {
       display: block;
-      margin: 12px 0 6px;
+      margin-top: 10px;
       font-weight: bold;
     }
-
     input, select, textarea {
       width: 100%;
-      padding: 8px 10px;
+      padding: 6px;
+      margin-top: 5px;
       border-radius: 8px;
-      border: 1.5px solid #0ff;
-      background: #101820;
-      color: #0ff;
-      font-size: 1em;
-      font-family: inherit;
-    }
-
-    .row {
-      display: flex;
-      gap: 16px;
-      flex-wrap: wrap;
-    }
-
-    .row > div {
-      flex: 1;
-      min-width: 250px;
-    }
-
-    textarea {
-      height: 64px;
-    }
-
-    #output {
-      margin-top: 24px;
-      font-family: monospace;
-      background: #111;
-      padding: 16px;
-      border-radius: 12px;
-      border: 1px dashed #0ff;
-      white-space: pre-wrap;
-    }
-
-    button {
-      margin-top: 12px;
-      background: #0ff;
-      color: #000;
-      font-weight: bold;
-      font-size: 1.1em;
-      padding: 12px 20px;
       border: none;
+      font-size: 16px;
+    }
+    textarea {
+      height: 80px;
+    }
+    .group {
+      margin-bottom: 20px;
+    }
+    button {
+      background-color: #38ff8e;
+      color: #000;
+      font-size: 18px;
+      padding: 10px 20px;
       border-radius: 10px;
       cursor: pointer;
-      box-shadow: 0 0 14px #0ff8;
+      border: none;
+      transition: 0.2s;
     }
-
     button:hover {
-      background: #47fff4;
+      background-color: #2ed87b;
     }
-
     #preview {
-      margin-top: 24px;
-      width: 100%;
-      max-width: 960px;
-      height: 540px;
-      border: 2px solid #0ff;
-      border-radius: 16px;
-      align-self: center;
+      margin-top: 30px;
+      padding: 10px;
+      background: #111;
+      border: 2px solid #38ff8e;
+      border-radius: 10px;
+      white-space: pre-wrap;
+      color: #fff;
+      font-family: monospace;
     }
   </style>
 </head>
 <body>
   <h1>Редактор Wordsearch</h1>
 
-  <label>Слова (через запятую или с новой строки):</label>
-  <textarea id="words">apple, banana, robot</textarea>
-
-  <div class="row">
-    <div>
-      <label>Алфавит:</label>
-      <select id="alphabet">
-        <option value="latin">Латиница (EN)</option>
-        <option value="cyrillic">Кириллица (RU)</option>
-        <option value="french">Французский</option>
-        <option value="german">Немецкий</option>
-        <option value="spanish">Испанский</option>
-        <option value="pinyin">Китайский (пиньинь)</option>
-        <option value="hiragana">Хирагана (яп.)</option>
-      </select>
-    </div>
-    <div>
-      <label>Размер сетки:</label>
-      <input type="number" id="gridSize" min="5" max="15" value="10">
-    </div>
+  <div class="group">
+    <label for="words">Слова (через запятую):</label>
+    <textarea id="words">КОШКА, СОБАКА, СОЛНЦЕ, МОРОЗ</textarea>
   </div>
 
-  <div class="row">
-    <div>
-      <label>Регистр:</label>
-      <select id="case">
-        <option value="uppercase">ЗАГЛАВНЫЕ</option>
-        <option value="lowercase">строчные</option>
-      </select>
-    </div>
-    <div>
-      <label>Сложность:</label>
-      <select id="level">
-        <option value="easy">Лёгкий</option>
-        <option value="medium" selected>Средний</option>
-        <option value="hard">Сложный</option>
-      </select>
-    </div>
+  <div class="group">
+    <label for="gridSize">Размер сетки (макс 12):</label>
+    <input type="number" id="gridSize" value="10" min="6" max="12">
   </div>
 
-  <div class="row">
-    <div>
-      <label>Категория шрифта:</label>
-      <select id="fontStyle">
-        <option value="classic">Классический</option>
-        <option value="comic">Мультяшный</option>
-        <option value="cute">Милый</option>
-        <option value="tech">Техно / робот</option>
-      </select>
-    </div>
-    <div>
-      <label>Цвет свечения (glow):</label>
-      <input type="color" id="glowColor" value="#00ffff">
-    </div>
+  <div class="group">
+    <label for="font">Шрифт:</label>
+    <select id="font">
+      <option value="Orbitron">Классика</option>
+      <option value="Roboto">Робот</option>
+      <option value="Comic Neue">Мультяшный</option>
+      <option value="Comfortaa">Милый</option>
+    </select>
   </div>
 
-  <div class="row">
-    <div>
-      <label>Тип свечения:</label>
-      <select id="glowType">
-        <option value="none">Нет</option>
-        <option value="neon" selected>Неон</option>
-        <option value="rainbow">Радужный</option>
-      </select>
-    </div>
-    <div>
-      <label>Фраза победы:</label>
-      <input type="text" id="winText" value="Ты нашёл все слова!">
-    </div>
+  <div class="group">
+    <label for="cellColor">Цвет ячеек (HEX):</label>
+    <input type="color" id="cellColor" value="#00ffff">
   </div>
 
-  <button onclick="generateCode()">Сгенерировать код</button>
-  <div id="output"></div>
+  <div class="group">
+    <label for="borderColor">Цвет рамки ячеек:</label>
+    <input type="color" id="borderColor" value="#00ffff">
+  </div>
 
-  <iframe id="preview"></iframe>
+  <div class="group">
+    <label for="textColor">Цвет букв:</label>
+    <input type="color" id="textColor" value="#00ffff">
+  </div>
+
+  <div class="group">
+    <label for="glowType">Эффект свечения:</label>
+    <select id="glowType">
+      <option value="none">Без свечения</option>
+      <option value="neon">Неон</option>
+      <option value="rainbow">Радужный</option>
+    </select>
+  </div>
+
+  <button onclick="generateCode()">Сгенерировать HTML</button>
+
+  <div id="preview"></div>
 
   <script>
     function generateCode() {
-      const words = document.getElementById("words").value
-        .split(/[\n,]+/)
-        .map(w => w.trim())
-        .filter(w => w.length > 0)
-        .join(",");
-      const gridSize = document.getElementById("gridSize").value;
-      const alphabet = document.getElementById("alphabet").value;
-      const level = document.getElementById("level").value;
-      const letterCase = document.getElementById("case").value;
-      const fontStyle = document.getElementById("fontStyle").value;
-      const glowType = document.getElementById("glowType").value;
-      const glowColor = document.getElementById("glowColor").value;
-      const winText = encodeURIComponent(document.getElementById("winText").value.trim());
+      const words = document.getElementById('words').value.split(',').map(w => w.trim().toUpperCase()).filter(w => w.length > 1);
+      const gridSize = Math.min(12, parseInt(document.getElementById('gridSize').value));
+      const font = document.getElementById('font').value;
+      const cellColor = document.getElementById('cellColor').value;
+      const borderColor = document.getElementById('borderColor').value;
+      const textColor = document.getElementById('textColor').value;
+      const glowType = document.getElementById('glowType').value;
 
-      const params = new URLSearchParams({
-        words,
-        gridSize,
-        alphabet,
-        level,
-        case: letterCase,
-        fontStyle,
-        glowType,
-        glowColor,
-        winText
-      });
+      const result = `<!DOCTYPE html>
+<!-- HTML сгенерирован редактором Wordsearch -->
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Wordsearch</title>
+  <script>
+    window.gameData = {
+      words: ${JSON.stringify(words)},
+      size: ${gridSize},
+      font: "${font}",
+      cellColor: "${cellColor}",
+      borderColor: "${borderColor}",
+      textColor: "${textColor}",
+      glow: "${glowType}"
+    }
+  </script>
+  <script src="https://nikashum93.github.io/wordsearch1/main.html"></script>
+</head>
+<body>
+</body>
+</html>`;
 
-      const fullUrl = `https://nikashum93.github.io/wordsearch1/main.html?${params}`;
-      const iframeCode = `<iframe src="${fullUrl}" width="960" height="540" frameborder="0" allowfullscreen></iframe>`;
-      document.getElementById("output").textContent = iframeCode;
-      document.getElementById("preview").src = fullUrl;
+      document.getElementById('preview').textContent = result;
     }
   </script>
 </body>
