@@ -1,244 +1,209 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <title>Редактор Wordsearch</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&family=VT323&display=swap" rel="stylesheet">
+  <meta charset="UTF-8">
+  <title>Редактор Wordsearch by Nika Shum</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron&display=swap" rel="stylesheet">
   <style>
     body {
-      font-family: 'Nunito', sans-serif;
-      background: #f0f0f0;
-      margin: 40px auto;
-      max-width: 900px;
-      color: #333;
+      margin: 0;
+      padding: 30px;
+      background: radial-gradient(circle at center, #11161e, #0a0f14);
+      color: #0ff;
+      font-family: 'Orbitron', sans-serif;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
     }
+
     h1 {
+      font-size: 1.6em;
       text-align: center;
-      font-size: 28px;
+      color: #0ff;
+      text-shadow: 0 0 8px #0ffb;
     }
+
     label {
+      display: block;
+      margin: 12px 0 6px;
       font-weight: bold;
     }
-    textarea, select, input {
+
+    input, select, textarea {
       width: 100%;
-      margin-bottom: 20px;
-      padding: 10px;
-      font-size: 16px;
-    }
-    button {
-      background: #4CAF50;
-      color: white;
-      border: none;
-      padding: 15px 20px;
-      font-size: 16px;
-      cursor: pointer;
+      padding: 8px 10px;
       border-radius: 8px;
+      border: 1.5px solid #0ff;
+      background: #101820;
+      color: #0ff;
+      font-size: 1em;
+      font-family: inherit;
     }
+
+    .row {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .row > div {
+      flex: 1;
+      min-width: 250px;
+    }
+
+    textarea {
+      height: 64px;
+    }
+
+    #output {
+      margin-top: 24px;
+      font-family: monospace;
+      background: #111;
+      padding: 16px;
+      border-radius: 12px;
+      border: 1px dashed #0ff;
+      white-space: pre-wrap;
+    }
+
+    button {
+      margin-top: 12px;
+      background: #0ff;
+      color: #000;
+      font-weight: bold;
+      font-size: 1.1em;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      box-shadow: 0 0 14px #0ff8;
+    }
+
     button:hover {
-      background: #45a049;
+      background: #47fff4;
+    }
+
+    #preview {
+      margin-top: 24px;
+      width: 100%;
+      max-width: 960px;
+      height: 540px;
+      border: 2px solid #0ff;
+      border-radius: 16px;
+      align-self: center;
     }
   </style>
 </head>
 <body>
   <h1>Редактор Wordsearch</h1>
 
-  <label>Слова через запятую:</label>
-  <textarea id="words">КОШКА, СОБАКА, ПОГОДАИЗМЕНЧИВА</textarea>
+  <label>Слова (через запятую или с новой строки):</label>
+  <textarea id="words">apple, banana, robot</textarea>
 
-  <label>Язык (ру, en, fr, es, ja, zh, de):</label>
-  <select id="lang">
-    <option value="ru">Русский</option>
-    <option value="en">English</option>
-    <option value="fr">Français</option>
-    <option value="es">Español</option>
-    <option value="ja">日本語</option>
-    <option value="zh">中文</option>
-    <option value="de">Deutsch</option>
-  </select>
+  <div class="row">
+    <div>
+      <label>Алфавит:</label>
+      <select id="alphabet">
+        <option value="latin">Латиница (EN)</option>
+        <option value="cyrillic">Кириллица (RU)</option>
+        <option value="french">Французский</option>
+        <option value="german">Немецкий</option>
+        <option value="spanish">Испанский</option>
+        <option value="pinyin">Китайский (пиньинь)</option>
+        <option value="hiragana">Хирагана (яп.)</option>
+      </select>
+    </div>
+    <div>
+      <label>Размер сетки:</label>
+      <input type="number" id="gridSize" min="5" max="15" value="10">
+    </div>
+  </div>
 
-  <label>Тема оформления:</label>
-  <select id="theme">
-    <option value="light">Светлая</option>
-    <option value="magic">Магия</option>
-    <option value="rainbow">Радужная</option>
-  </select>
+  <div class="row">
+    <div>
+      <label>Регистр:</label>
+      <select id="case">
+        <option value="uppercase">ЗАГЛАВНЫЕ</option>
+        <option value="lowercase">строчные</option>
+      </select>
+    </div>
+    <div>
+      <label>Сложность:</label>
+      <select id="level">
+        <option value="easy">Лёгкий</option>
+        <option value="medium" selected>Средний</option>
+        <option value="hard">Сложный</option>
+      </select>
+    </div>
+  </div>
 
-  <label>Финальный текст:</label>
-  <input id="winText" value="Молодец! Все слова найдены!" />
+  <div class="row">
+    <div>
+      <label>Категория шрифта:</label>
+      <select id="fontStyle">
+        <option value="classic">Классический</option>
+        <option value="comic">Мультяшный</option>
+        <option value="cute">Милый</option>
+        <option value="tech">Техно / робот</option>
+      </select>
+    </div>
+    <div>
+      <label>Цвет свечения (glow):</label>
+      <input type="color" id="glowColor" value="#00ffff">
+    </div>
+  </div>
 
-  <button onclick="generateGame()">Скачать HTML-игру</button>
+  <div class="row">
+    <div>
+      <label>Тип свечения:</label>
+      <select id="glowType">
+        <option value="none">Нет</option>
+        <option value="neon" selected>Неон</option>
+        <option value="rainbow">Радужный</option>
+      </select>
+    </div>
+    <div>
+      <label>Фраза победы:</label>
+      <input type="text" id="winText" value="Ты нашёл все слова!">
+    </div>
+  </div>
+
+  <button onclick="generateCode()">Сгенерировать код</button>
+  <div id="output"></div>
+
+  <iframe id="preview"></iframe>
 
   <script>
-    function getSoundScript() {
-      return `
-        function loadSound(name) {
-          return fetch(name, { method: 'HEAD' })
-            .then(res => res.ok ? name : './' + name)
-            .catch(() => './' + name);
-        }
-        async function playSound(name) {
-          const src = await loadSound(name);
-          const audio = new Audio(src);
-          audio.play();
-        }
-      `;
-    }
+    function generateCode() {
+      const words = document.getElementById("words").value
+        .split(/[\n,]+/)
+        .map(w => w.trim())
+        .filter(w => w.length > 0)
+        .join(",");
+      const gridSize = document.getElementById("gridSize").value;
+      const alphabet = document.getElementById("alphabet").value;
+      const level = document.getElementById("level").value;
+      const letterCase = document.getElementById("case").value;
+      const fontStyle = document.getElementById("fontStyle").value;
+      const glowType = document.getElementById("glowType").value;
+      const glowColor = document.getElementById("glowColor").value;
+      const winText = encodeURIComponent(document.getElementById("winText").value.trim());
 
-    function generateGame() {
-      const words = document.getElementById("words").value.toUpperCase().split(',').map(w => w.trim()).filter(Boolean);
-      const lang = document.getElementById("lang").value;
-      const theme = document.getElementById("theme").value;
-      const winText = document.getElementById("winText").value;
+      const params = new URLSearchParams({
+        words,
+        gridSize,
+        alphabet,
+        level,
+        case: letterCase,
+        fontStyle,
+        glowType,
+        glowColor,
+        winText
+      });
 
-      const longest = Math.max(...words.map(w => w.length));
-      const gridSize = Math.max(10, longest + 2);
-
-      const alphabetMap = {
-        ru: 'АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ',
-        en: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
-        fr: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
-        es: 'ABCDEFGHIJKLMNÑOPQRSTUVWXYZ',
-        ja: 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモラリルレロワヲン',
-        zh: '的一是在不了有和人这中大为上个国我以要他时来用们生到作地于出就分对成会可主发年动同工也能下过子说产种面而方后多定行学法所民得经十三之进着等部度家电力里如水化高自二理起小物现实加量都两体制机当使点从业本去把性好应开它合还因由其些然前外天政四日那社义事平形相全表间样与关各重新线内数正心反你明看原又么利比或但质气第向道命此变条只没结解问意建月公无系军很情者最立代想已通并提直题党程展五果料象员革位入常文总次品式活设及管特件长求老头基资边流路级少图山统接知较将组见计别她手角期根论运农指几九区强放决西被干做必战先回则任取据处队南给色光门即保治北造百规热领七海口东导器压志世金增争济阶油思术极交受联什认六共权收证改清己美再采转更单风节解'.
-
-      const letters = alphabetMap[lang] || alphabetMap['ru'];
-
-      const html = `
-<!DOCTYPE html>
-<html lang="${lang}">
-<head>
-<meta charset="UTF-8" />
-<title>Wordsearch Game</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<style>
-  body { font-family: sans-serif; background: #f0f0f0; margin: 20px; }
-  #grid { display: grid; grid-template-columns: repeat(${gridSize}, 1fr); gap: 4px; }
-  .cell {
-    width: 36px; height: 36px;
-    background: white;
-    text-align: center; line-height: 36px;
-    font-size: 18px; font-weight: bold;
-    border-radius: 6px;
-    cursor: pointer;
-    user-select: none;
-  }
-  .cell.selected { background: #ffc; }
-  .cell.found {
-    background: linear-gradient(to right, red, orange, yellow, green, blue, indigo, violet);
-    color: white;
-    animation: rainbow 1s infinite alternate;
-  }
-  @keyframes rainbow {
-    0% { filter: hue-rotate(0deg); }
-    100% { filter: hue-rotate(360deg); }
-  }
-  #word-list { margin-top: 20px; }
-  .word { margin: 5px 0; font-weight: bold; }
-  .word.found { text-decoration: line-through; color: gray; }
-</style>
-</head>
-<body>
-<h2>${winText}</h2>
-<div id="grid"></div>
-<div id="word-list"></div>
-<script>
-${getSoundScript()}
-
-const words = ${JSON.stringify(words)};
-const letters = "${letters}";
-const gridSize = ${gridSize};
-const grid = Array.from({ length: gridSize }, () => Array(gridSize).fill(''));
-const placedWords = [];
-
-function getRandomDir() {
-  const dirs = [
-    { dx: 1, dy: 0 }, { dx: 0, dy: 1 },
-    { dx: 1, dy: 1 }, { dx: -1, dy: 0 },
-    { dx: 0, dy: -1 }, { dx: -1, dy: -1 },
-    { dx: 1, dy: -1 }, { dx: -1, dy: 1 }
-  ];
-  return dirs[Math.floor(Math.random() * dirs.length)];
-}
-
-function placeWords() {
-  for (const word of words) {
-    let placed = false;
-    for (let attempt = 0; attempt < 500 && !placed; attempt++) {
-      const dir = getRandomDir();
-      const x = Math.floor(Math.random() * gridSize);
-      const y = Math.floor(Math.random() * gridSize);
-      let fits = true;
-      for (let i = 0; i < word.length; i++) {
-        const nx = x + dir.dx * i;
-        const ny = y + dir.dy * i;
-        if (nx < 0 || ny < 0 || nx >= gridSize || ny >= gridSize || (grid[ny][nx] && grid[ny][nx] !== word[i])) {
-          fits = false; break;
-        }
-      }
-      if (fits) {
-        for (let i = 0; i < word.length; i++) {
-          const nx = x + dir.dx * i;
-          const ny = y + dir.dy * i;
-          grid[ny][nx] = word[i];
-        }
-        placedWords.push({ word, x, y, dx: dir.dx, dy: dir.dy });
-        placed = true;
-      }
-    }
-  }
-}
-
-function fillGrid() {
-  for (let y = 0; y < gridSize; y++) {
-    for (let x = 0; x < gridSize; x++) {
-      if (!grid[y][x]) {
-        grid[y][x] = letters[Math.floor(Math.random() * letters.length)];
-      }
-    }
-  }
-}
-
-function drawGrid() {
-  const container = document.getElementById("grid");
-  container.innerHTML = "";
-  for (let y = 0; y < gridSize; y++) {
-    for (let x = 0; x < gridSize; x++) {
-      const div = document.createElement("div");
-      div.className = "cell";
-      div.textContent = grid[y][x];
-      div.dataset.x = x;
-      div.dataset.y = y;
-      container.appendChild(div);
-    }
-  }
-}
-
-function drawWords() {
-  const list = document.getElementById("word-list");
-  list.innerHTML = "";
-  for (const word of words) {
-    const div = document.createElement("div");
-    div.className = "word";
-    div.textContent = word;
-    list.appendChild(div);
-  }
-}
-
-placeWords();
-fillGrid();
-drawGrid();
-drawWords();
-</script>
-</body>
-</html>
-`;
-
-      const blob = new Blob([html], { type: 'text/html' });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = 'wordsearch.html';
-      link.click();
+      const fullUrl = `https://nikashum93.github.io/wordsearch1/main.html?${params}`;
+      const iframeCode = `<iframe src="${fullUrl}" width="960" height="540" frameborder="0" allowfullscreen></iframe>`;
+      document.getElementById("output").textContent = iframeCode;
+      document.getElementById("preview").src = fullUrl;
     }
   </script>
 </body>
